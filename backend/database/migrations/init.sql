@@ -89,12 +89,18 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 -- ─── Seed Data (Akun Default untuk Testing) ───────────────────
--- Password semua akun: "password123" (bcrypt hash di bawah)
--- GANTI password ini sebelum deploy ke production!
-INSERT IGNORE INTO users (nama, email, password, role) VALUES
-('Admin Sistem', 'admin@kampus.ac.id', '$2a$10$placeholder_bcrypt_hash_admin', 'admin'),
-('Dr. Budi Santoso', 'budi@kampus.ac.id', '$2a$10$placeholder_bcrypt_hash_dosen', 'dosen'),
-('Prof. Siti WR3', 'warek3@kampus.ac.id', '$2a$10$placeholder_bcrypt_hash_warek3', 'warek3');
+-- CATATAN: Mulai sekarang, seed data dihandle secara otomatis
+-- oleh backend Golang melalui file database/seed.go
+--
+-- Akun yang akan dibuat secara otomatis jika belum ada:
+-- 1. Admin: admin@mail.com / admin123
+-- 2. Dosen: dosen@mail.com / dosen123
+-- 3. Warek3: warek@mail.com / warek123
+-- 
+-- Tidak perlu lagi menjalankan insert manual di bawah ini,
+-- namun dibiarkan sebagai referensi historis.
 
--- TODO: Generate bcrypt hash dari "password123" menggunakan:
--- go run scripts/generate_hash.go atau gunakan tool online bcrypt generator
+-- INSERT IGNORE INTO users (nama, email, password, role) VALUES
+-- ('Admin Sistem', 'admin@mail.com', '$2a$10$...', 'admin'),
+-- ('Dr. Dosen Tester', 'dosen@mail.com', '$2a$10$...', 'dosen'),
+-- ('Prof. Warek 3', 'warek@mail.com', '$2a$10$...', 'warek3');

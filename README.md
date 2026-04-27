@@ -8,7 +8,7 @@ Sistem manajemen kehadiran dosen yang aman dan efisien menggunakan teknologi QR 
 
 | Peran | Anggota | Tanggung Jawab |
 | :--- | :--- | :--- |
-| **🧑‍🏫 Dosen** | **Kamu** | Fitur Utama Dosen, Laporan Kendala, & Integrasi Geolocation |
+| **🧑‍🏫 Dosen** | Anggota 1 | Fitur Utama Dosen, Laporan Kendala, & Integrasi Geolocation |
 | **🛠️ Admin** | Anggota 2 | Manajemen Jadwal, Aktivasi Sesi, & Pusat Pesan |
 | **📊 Warek 3** | Anggota 3 | Monitoring Dashboard & Rekapitulasi Laporan |
 
