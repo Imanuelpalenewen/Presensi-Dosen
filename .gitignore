@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment Variables — JANGAN pernah di-commit!
+.env
+backend/.env
+frontend/.env
+
+# Build Output
+dist/
+build/
+
+# Go
+backend/tmp/
+*.exe
+*.test
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
