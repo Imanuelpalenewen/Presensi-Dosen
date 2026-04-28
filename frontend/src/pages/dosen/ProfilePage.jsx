@@ -222,16 +222,27 @@ export default function ProfilPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPassModal, setShowPassModal] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    dosenService
-      .getProfile()
-      .then((r) => setProfile(r.data?.data))
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false));
+    const loadProfile = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await dosenService.getProfile();
+        setProfile(res.data?.data);
+      } catch (err) {
+        setError('Gagal memuat profil dari server.');
+        setProfile(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
   }, []);
 
-  const initials = (user?.name || 'D')
+  const initials = (profile?.name || user?.name || 'D')
     .split(' ')
     .slice(0, 2)
     .map((n) => n[0])
@@ -290,7 +301,7 @@ export default function ProfilPage() {
           <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
             {[
               { v: profile.total_sessions || 0, l: 'semester ini' },
-              { v: profile.total_meetings || 0, l: 'pertemuan' },
+              { v: profile.attended || 0, l: 'kehadiran' },
               { v: `${profile.attendance_rate || 0}%`, l: 'rata-rata' },
             ].map((s) => (
               <div
@@ -322,6 +333,37 @@ export default function ProfilPage() {
               animation: 'shimmer 1.4s infinite',
             }}
           />
+        ) : error ? (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fca5a5',
+              borderRadius: 20,
+              padding: '16px 20px',
+              marginBottom: 16,
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 13, color: '#dc2626', fontWeight: 600 }}>
+              ⚠️ {error}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                marginTop: 12,
+                background: '#1E2D78',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Coba Lagi
+            </button>
+          </div>
         ) : (
           <>
             {/* Info card */}
@@ -342,10 +384,8 @@ export default function ProfilPage() {
               </div>
               <InfoRow icon="👤" label="Nama Lengkap" value={data?.name} />
               <InfoRow icon="✉️" label="Email" value={data?.email} />
-              <InfoRow icon="#️⃣" label="NIP" value={data?.nip} />
               <InfoRow icon="📚" label="Program Studi" value={data?.department} />
               <InfoRow icon="📖" label="Mata Kuliah" value={data?.courses?.join(', ')} />
-              <InfoRow icon="🏛️" label="Jabatan" value={data?.position} />
             </div>
 
             {/* Settings card */}
@@ -364,9 +404,7 @@ export default function ProfilPage() {
                   Pengaturan
                 </p>
               </div>
-              <SettingRow icon="🔔" label="Notifikasi" sublabel="Pengingat sesi aktif" onClick={() => {}} />
               <SettingRow icon="🔒" label="Keamanan" sublabel="Ganti password" onClick={() => setShowPassModal(true)} />
-              <SettingRow icon="❓" label="Bantuan" sublabel="FAQ & Kontak admin" onClick={() => {}} />
             </div>
 
             <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', margin: '8px 0 0' }}>

@@ -14,6 +14,7 @@ export default function ScanQRPage() {
   const [result, setResult] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [scannerReady, setScannerReady] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState('environment'); // 'environment' | 'user'
 
   const scannerInstanceRef = useRef(null);
   const qrReaderRef = useRef(null);
@@ -30,7 +31,7 @@ export default function ScanQRPage() {
     return errorMap[errCode] || errMessage || 'Terjadi kesalahan. Coba lagi nanti.';
   };
 
-  // Initialize & cleanup scanner
+  // Initialize & cleanup scanner with proper camera facing
   useEffect(() => {
     if (mode !== 'scanner') {
       // Cleanup scanner when switching to manual mode
@@ -54,13 +55,14 @@ export default function ScanQRPage() {
         const scanner = new Html5Qrcode('qr-reader');
         scannerInstanceRef.current = scanner;
 
+        // Increase QR box size for better scanning area and don't over-zoom
         await scanner.start(
-          { facingMode: 'environment' },
+          { facingMode: cameraFacing },
           {
             fps: 10,
-            qrbox: { width: 250, height: 250 },
+            qrbox: { width: 350, height: 350 }, // Increased from 250x250
             aspectRatio: 1.0,
-            showTorchButtonIfSupported: true,
+            showTorchButtonIfSupported: false, // Remove flash feature
           },
           (decodedText) => handleQRSuccess(decodedText),
           () => {} // suppress error logs
@@ -97,7 +99,7 @@ export default function ScanQRPage() {
       };
       cleanup();
     };
-  }, [mode]);
+  }, [mode, cameraFacing]);
 
   const handleQRSuccess = async (decodedText) => {
     if (submitting) return;
@@ -107,6 +109,19 @@ export default function ScanQRPage() {
       } catch (e) {}
     }
     submitQRToken(decodedText);
+  };
+
+  const toggleCamera = async () => {
+    // Stop current scanner
+    if (scannerInstanceRef.current) {
+      try {
+        await scannerInstanceRef.current.stop();
+      } catch (e) {}
+      scannerInstanceRef.current = null;
+    }
+    setScannerReady(false);
+    // Switch camera facing
+    setCameraFacing((prev) => (prev === 'environment' ? 'user' : 'environment'));
   };
 
   const submitQRToken = async (token) => {
@@ -135,10 +150,11 @@ export default function ScanQRPage() {
         if (mode === 'scanner' && scannerInstanceRef.current) {
           try {
             await scannerInstanceRef.current.start(
-              { facingMode: 'environment' },
+              { facingMode: cameraFacing },
               {
                 fps: 10,
-                qrbox: { width: 250, height: 250 },
+                qrbox: { width: 350, height: 350 },
+                showTorchButtonIfSupported: false,
               },
               (decodedText) => handleQRSuccess(decodedText),
               () => {}
@@ -175,10 +191,11 @@ export default function ScanQRPage() {
       if (mode === 'scanner' && scannerInstanceRef.current) {
         try {
           await scannerInstanceRef.current.start(
-            { facingMode: 'environment' },
+            { facingMode: cameraFacing },
             {
               fps: 10,
-              qrbox: { width: 250, height: 250 },
+              qrbox: { width: 350, height: 350 },
+              showTorchButtonIfSupported: false,
             },
             (decodedText) => handleQRSuccess(decodedText),
             () => {}
@@ -206,7 +223,7 @@ export default function ScanQRPage() {
           position: 'relative',
           overflow: 'hidden',
           aspectRatio: '1 / 1',
-          maxHeight: '55vw',
+          maxHeight: '60vw',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -263,6 +280,36 @@ export default function ScanQRPage() {
               }}
             />
 
+            {/* Camera Switch Button */}
+            {mode === 'scanner' && scannerReady && (
+              <button
+                onClick={toggleCamera}
+                disabled={submitting}
+                style={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  zIndex: 12,
+                  background: 'rgba(255,255,255,0.15)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: 10,
+                  padding: '10px 14px',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.2s',
+                  opacity: submitting ? 0.5 : 1,
+                }}
+              >
+                {cameraFacing === 'environment' ? '📷' : '🤳'} Ubah Kamera
+              </button>
+            )}
+
             {/* Scanner Status */}
             {mode === 'scanner' && (
               <div
@@ -313,42 +360,42 @@ export default function ScanQRPage() {
                 key={corner}
                 style={{
                   position: 'absolute',
-                  width: 30,
-                  height: 30,
+                  width: 40,
+                  height: 40,
                   borderColor: '#22c55e',
                   borderStyle: 'solid',
                   borderWidth: 0,
                   zIndex: 11,
                   ...(corner === 'tl'
                     ? {
-                        top: 40,
-                        left: 40,
-                        borderTopWidth: 3,
-                        borderLeftWidth: 3,
-                        borderRadius: '6px 0 0 0',
+                        top: 50,
+                        left: 50,
+                        borderTopWidth: 4,
+                        borderLeftWidth: 4,
+                        borderRadius: '8px 0 0 0',
                       }
                     : corner === 'tr'
                     ? {
-                        top: 40,
-                        right: 40,
-                        borderTopWidth: 3,
-                        borderRightWidth: 3,
-                        borderRadius: '0 6px 0 0',
+                        top: 50,
+                        right: 50,
+                        borderTopWidth: 4,
+                        borderRightWidth: 4,
+                        borderRadius: '0 8px 0 0',
                       }
                     : corner === 'bl'
                     ? {
-                        bottom: 40,
-                        left: 40,
-                        borderBottomWidth: 3,
-                        borderLeftWidth: 3,
-                        borderRadius: '0 0 0 6px',
+                        bottom: 50,
+                        left: 50,
+                        borderBottomWidth: 4,
+                        borderLeftWidth: 4,
+                        borderRadius: '0 0 0 8px',
                       }
                     : {
-                        bottom: 40,
-                        right: 40,
-                        borderBottomWidth: 3,
-                        borderRightWidth: 3,
-                        borderRadius: '0 0 6px 0',
+                        bottom: 50,
+                        right: 50,
+                        borderBottomWidth: 4,
+                        borderRightWidth: 4,
+                        borderRadius: '0 0 8px 0',
                       }),
                 }}
               />
@@ -359,8 +406,10 @@ export default function ScanQRPage() {
               <div
                 style={{
                   position: 'absolute',
-                  left: 44,
-                  right: 44,
+                  left: '50%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: 280,
                   height: 2,
                   background: 'linear-gradient(90deg, transparent, #22c55e, transparent)',
                   animation: 'scanline 2.4s ease-in-out infinite',
@@ -406,28 +455,6 @@ export default function ScanQRPage() {
         {/* Mode Toggle / Input Area */}
         {mode === 'scanner' ? (
           <>
-            <button
-              disabled={submitting}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: 14,
-                border: '1.5px solid #e2e8f0',
-                background: submitting ? '#f1f5f9' : '#fff',
-                fontSize: 14,
-                fontWeight: 700,
-                color: '#1e293b',
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                transition: 'all 0.2s',
-              }}
-            >
-              🔦 Nyalakan Senter
-            </button>
-
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
               <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>ATAU</span>
@@ -558,7 +585,7 @@ export default function ScanQRPage() {
         >
           <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
           <p style={{ margin: 0, fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
-            Posisikan QR Code di tengah bingkai untuk scan. Pastikan lokasi GPS Anda aktif untuk verifikasi kehadiran.
+            Posisikan QR Code di tengah bingkai untuk scan optimal. Pastikan lokasi GPS Anda aktif untuk verifikasi kehadiran.
           </p>
         </div>
       </div>
@@ -574,6 +601,7 @@ export default function ScanQRPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          transform: scaleX(1);
         }
 
         #qr-reader canvas {
@@ -581,10 +609,10 @@ export default function ScanQRPage() {
         }
 
         @keyframes scanline {
-          0%   { top: 44px;   opacity: 0; }
+          0%   { top: -50px;   opacity: 0; }
           10%  { opacity: 1; }
           90%  { opacity: 1; }
-          100% { top: calc(100% - 44px); opacity: 0; }
+          100% { top: calc(100% + 50px); opacity: 0; }
         }
 
         @keyframes pulse {

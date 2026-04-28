@@ -64,6 +64,8 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	{
 		dosen.GET("/sessions/active", dosenHandler.GetActiveSessions)
 		dosen.GET("/attendance/history", dosenHandler.GetAttendanceHistory)
+		dosen.GET("/profile", dosenHandler.GetProfile)
+		dosen.GET("/attendance/stats", dosenHandler.GetAttendanceStats)
 	}
 
 	// Attendance submit bisa dari group sendiri karena path-nya berbeda

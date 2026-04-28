@@ -378,6 +378,140 @@ type AttendanceHistoryItem struct {
 }
 
 // ─────────────────────────────────────────────────────────────
+// GetProfile
+// ─────────────────────────────────────────────────────────────
+// Ambil profil lengkap dosen beserta statistik kehadiran semester ini.
+// Data termasuk: nama, email, NIP, prodi, mata kuliah, dan stats absensi.
+func (s *DosenService) GetProfile(dosenID uint) (*DosenProfile, error) {
+	// Query data dosen
+	var user models.User
+	if err := s.db.First(&user, dosenID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("dosen tidak ditemukan")
+		}
+		return nil, fmt.Errorf("gagal query dosen: %w", err)
+	}
+
+	// Hitung statistik attendance untuk semester ini
+	// Semester ini = bulan sekarang sebagai acuan
+	now := time.Now()
+	startOfSemester := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	if now.Month() > 6 {
+		startOfSemester = time.Date(now.Year(), 7, 1, 0, 0, 0, 0, time.UTC)
+	}
+	endOfSemester := startOfSemester.AddDate(0, 6, 0)
+
+	// Ambil jumlah jadwal (total sesi) untuk semester ini
+	var totalSessions int64
+	s.db.
+		Table("schedules").
+		Where("dosen_id = ?", dosenID).
+		Count(&totalSessions)
+
+	// Ambil jumlah kehadiran untuk semester ini
+	var attended int64
+	s.db.
+		Table("attendances").
+		Joins("JOIN sessions ON sessions.id = attendances.session_id").
+		Where(`attendances.dosen_id = ?
+		   AND attendances.jam_absen >= ?
+		   AND attendances.jam_absen < ?`,
+			dosenID, startOfSemester, endOfSemester).
+		Count(&attended)
+
+	// Hitung persentase kehadiran
+	attendanceRate := int64(0)
+	if totalSessions > 0 {
+		attendanceRate = (attended * 100) / totalSessions
+	}
+
+	// Ambil daftar mata kuliah yang diampu
+	var courses []string
+	s.db.
+		Table("schedules").
+		Distinct("mata_kuliah").
+		Where("dosen_id = ?", dosenID).
+		Pluck("mata_kuliah", &courses)
+
+	profile := &DosenProfile{
+		Name:           user.Nama,
+		Email:          user.Email,
+		Department:     user.Prodi,
+		Courses:        courses,
+		TotalSessions:  int(totalSessions),
+		Attended:       int(attended),
+		AttendanceRate: int(attendanceRate),
+	}
+
+	return profile, nil
+}
+
+// DosenProfile adalah profil lengkap dosen dengan statistik.
+type DosenProfile struct {
+	Name           string   `json:"name"`
+	Email          string   `json:"email"`
+	Department     string   `json:"department"`
+	Courses        []string `json:"courses"`
+	TotalSessions  int      `json:"total_sessions"`
+	Attended       int      `json:"attended"`
+	AttendanceRate int      `json:"attendance_rate"`
+}
+
+// ─────────────────────────────────────────────────────────────
+// GetAttendanceStats
+// ─────────────────────────────────────────────────────────────
+// Ambil ringkasan statistik kehadiran dosen untuk semester ini.
+// Termasuk: total sesi, jumlah hadir, persentase kehadiran.
+func (s *DosenService) GetAttendanceStats(dosenID uint) (*AttendanceStats, error) {
+	now := time.Now()
+	startOfSemester := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	if now.Month() > 6 {
+		startOfSemester = time.Date(now.Year(), 7, 1, 0, 0, 0, 0, time.UTC)
+	}
+	endOfSemester := startOfSemester.AddDate(0, 6, 0)
+
+	// Total jadwal dalam semester ini
+	var totalSessions int64
+	if err := s.db.
+		Table("schedules").
+		Where("dosen_id = ?", dosenID).
+		Count(&totalSessions).Error; err != nil {
+		return nil, fmt.Errorf("gagal hitung total sesi: %w", err)
+	}
+
+	// Jumlah kehadiran
+	var attended int64
+	if err := s.db.
+		Table("attendances").
+		Joins("JOIN sessions ON sessions.id = attendances.session_id").
+		Where(`attendances.dosen_id = ?
+		   AND attendances.jam_absen >= ?
+		   AND attendances.jam_absen < ?`,
+			dosenID, startOfSemester, endOfSemester).
+		Count(&attended).Error; err != nil {
+		return nil, fmt.Errorf("gagal hitung kehadiran: %w", err)
+	}
+
+	attendanceRate := int64(0)
+	if totalSessions > 0 {
+		attendanceRate = (attended * 100) / totalSessions
+	}
+
+	return &AttendanceStats{
+		TotalSessions:  int(totalSessions),
+		Attended:       int(attended),
+		AttendanceRate: int(attendanceRate),
+	}, nil
+}
+
+// AttendanceStats adalah ringkasan statistik kehadiran.
+type AttendanceStats struct {
+	TotalSessions  int `json:"total_sessions"`
+	Attended       int `json:"attended"`
+	AttendanceRate int `json:"attendance_rate"`
+}
+
+// ─────────────────────────────────────────────────────────────
 // Helper: konversi Go Weekday ke nama hari dalam Bahasa Indonesia
 // ─────────────────────────────────────────────────────────────
 func hariIndonesia(wd time.Weekday) string {

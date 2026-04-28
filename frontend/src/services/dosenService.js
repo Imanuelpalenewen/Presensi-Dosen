@@ -40,7 +40,7 @@ const dosenService = {
 
   // ── Profil ────────────────────────────────────────────────────────────────
   /**
-   * Ambil profil lengkap dosen.
+   * Ambil profil lengkap dosen dengan statistik kehadiran.
    * GET /dosen/profile
    */
   getProfile: () => api.get('/dosen/profile'),
@@ -52,7 +52,7 @@ const dosenService = {
    */
   changePassword: (data) => api.patch('/dosen/profile/password', data),
 
-  // ── Pesan / Laporan ───────────────────────────────────────────────────────
+  // ── Pesan / Laporan ───────────────────────────────────────────────────
   /**
    * Kirim laporan kendala absensi ke admin.
    * POST /dosen/messages
