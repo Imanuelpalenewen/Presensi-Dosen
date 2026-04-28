@@ -11,18 +11,16 @@
 //  Gunakan: adminService.getTodaySchedules, activateSession, closeSession
 // ============================================================
 
+import React from 'react';
 import Navbar from '../../components/common/Navbar'
 
 export default function TodaySchedulePage() {
-  // TODO: Implementasi halaman ini
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 py-6">
         <h2 className="text-xl font-bold mb-4">Jadwal Hari Ini</h2>
-        {/* TODO: Tabel jadwal hari ini dengan tombol aktivasi sesi dan QR display */}
-        <p className="text-gray-400">Halaman belum diimplementasi.</p>
+        <p className="text-gray-400 italic">Halaman ini sedang dalam tahap pengembangan fitur aktivasi sesi.</p>
       </div>
     </div>
   )

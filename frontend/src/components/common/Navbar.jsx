@@ -28,7 +28,8 @@ export default function Navbar() {
       { name: 'Hari Ini', path: '/admin/jadwal-hari-ini' },
       { name: 'Jadwal', path: '/admin/jadwal' },
       { name: 'Rekap', path: '/admin/rekap' },
-      { name: 'Inbox', path: '/admin/inbox' },
+      { name: 'Lokasi', path: '/admin/lokasi' },
+      { name: 'Inbox', path: '/admin/pesan' },
     ],
     warek3: [
       { name: 'Dashboard', path: '/warek/dashboard' },

@@ -4,12 +4,12 @@
 // Tidak perlu diubah kecuali ada kebutuhan khusus.
 // ============================================================
 
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 // allowedRoles: array role yang boleh akses route ini
 // Contoh: allowedRoles={['dosen']} atau allowedRoles={['admin', 'warek3']}
-export default function ProtectedRoute({ allowedRoles }) {
+export default function ProtectedRoute({ allowedRoles, children }) {
   const { user, token } = useAuth()
 
   // Jika belum login → redirect ke login
@@ -22,6 +22,9 @@ export default function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/login" replace />
   }
 
-  // Role valid → render halaman
-  return <Outlet />
+  // ✅ Fix: render children (DosenLayout/AdminLayout dll)
+  // Sebelumnya <Outlet /> → DosenLayout tidak pernah dirender,
+  // child routes langsung tampil tanpa header & BottomNav.
+  // DosenLayout sudah punya <Outlet />-nya sendiri di dalam.
+  return children
 }
