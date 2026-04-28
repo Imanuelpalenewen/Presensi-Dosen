@@ -10,27 +10,29 @@ function InfoRow({ icon, label, value }) {
         display: 'flex',
         alignItems: 'flex-start',
         gap: 14,
-        padding: '14px 0',
+        padding: '16px 0',
         borderBottom: '1px solid #f1f5f9',
       }}
     >
       <div
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
+          width: 40,
+          height: 40,
+          borderRadius: 12,
           background: '#eff6ff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 17,
+          color: '#1d4ed8',
+          fontSize: 18,
+          fontWeight: 700,
           flexShrink: 0,
         }}
       >
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: '0 0 1px', fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        <p style={{ margin: '0 0 2px', fontSize: 11, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
           {label}
         </p>
         <p style={{ margin: 0, fontSize: 14, color: '#1e293b', fontWeight: 600, wordBreak: 'break-word' }}>
@@ -49,39 +51,48 @@ function SettingRow({ icon, label, sublabel, onClick, danger }) {
         display: 'flex',
         alignItems: 'center',
         gap: 14,
-        padding: '14px 0',
+        padding: '16px 0',
         width: '100%',
         background: 'none',
         border: 'none',
         borderBottom: '1px solid #f1f5f9',
         cursor: 'pointer',
         textAlign: 'left',
+        transition: 'opacity 0.2s',
+      }}
+      onMouseOver={(e) => {
+        e.currentTarget.style.opacity = '0.7';
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.opacity = '1';
       }}
     >
       <div
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
+          width: 40,
+          height: 40,
+          borderRadius: 12,
           background: danger ? '#fef2f2' : '#f8fafc',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 17,
+          color: danger ? '#dc2626' : '#1d4ed8',
+          fontSize: 18,
+          fontWeight: 700,
           flexShrink: 0,
         }}
       >
         {icon}
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ margin: '0 0 1px', fontSize: 14, fontWeight: 700, color: danger ? '#dc2626' : '#1e293b' }}>
+        <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: danger ? '#dc2626' : '#1e293b' }}>
           {label}
         </p>
         {sublabel && (
           <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>{sublabel}</p>
         )}
       </div>
-      <span style={{ color: '#cbd5e1', fontSize: 18, flexShrink: 0 }}>›</span>
+      <span style={{ color: '#cbd5e1', fontSize: 20, fontWeight: 300, flexShrink: 0 }}>›</span>
     </button>
   );
 }
@@ -150,12 +161,12 @@ function PasswordModal({ onClose }) {
           }}
         />
         <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
-          🔒 Ganti Password
+          Ganti Password
         </h3>
 
         {['current', 'next', 'confirm'].map((field) => (
-          <div key={field} style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 6 }}>
+          <div key={field} style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {field === 'current' ? 'Password Saat Ini' : field === 'next' ? 'Password Baru' : 'Konfirmasi Password Baru'}
             </label>
             <input
@@ -172,6 +183,15 @@ function PasswordModal({ onClose }) {
                 outline: 'none',
                 color: '#1e293b',
                 boxSizing: 'border-box',
+                transition: 'all 0.2s',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#1d4ed8';
+                e.target.style.boxShadow = '0 0 0 3px rgba(29, 78, 216, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
               }}
             />
           </div>
@@ -183,7 +203,7 @@ function PasswordModal({ onClose }) {
               background: msg.ok ? '#f0fdf4' : '#fef2f2',
               border: `1px solid ${msg.ok ? '#86efac' : '#fca5a5'}`,
               borderRadius: 10,
-              padding: '10px 14px',
+              padding: '12px 14px',
               marginBottom: 14,
               fontSize: 13,
               color: msg.ok ? '#15803d' : '#dc2626',
@@ -202,14 +222,28 @@ function PasswordModal({ onClose }) {
             padding: 14,
             borderRadius: 14,
             border: 'none',
-            background: submitting ? '#94a3b8' : 'linear-gradient(135deg,#1E2D78,#2d3f9e)',
+            background: submitting ? '#94a3b8' : 'linear-gradient(135deg, #1E2D78 0%, #2d3f9e 100%)',
             color: '#fff',
             fontSize: 15,
             fontWeight: 700,
             cursor: submitting ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s',
+            boxShadow: submitting ? 'none' : '0 4px 12px rgba(30,45,120,0.3)',
+          }}
+          onMouseOver={(e) => {
+            if (!submitting) {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 16px rgba(30,45,120,0.4)';
+            }
+          }}
+          onMouseOut={(e) => {
+            if (!submitting) {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(30,45,120,0.3)';
+            }
           }}
         >
-          {submitting ? 'Memproses…' : 'Simpan Password'}
+          {submitting ? 'Memproses...' : 'Simpan Password'}
         </button>
       </div>
     </div>
@@ -248,80 +282,83 @@ export default function ProfilPage() {
 
   return (
     <div>
-      {/* Hero */}
+      {/* Hero Section */}
       <div
         style={{
           background: 'linear-gradient(135deg, #1E2D78 0%, #162060 100%)',
-          padding: '32px 20px 48px',
+          padding: '40px 20px 48px',
           textAlign: 'center',
         }}
       >
         <div
           style={{
-            width: 76,
-            height: 76,
+            width: 80,
+            height: 80,
             borderRadius: '50%',
-            background: '#10B981',
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 28,
+            fontSize: 32,
             fontWeight: 800,
-            margin: '0 auto 14px',
-            border: '3px solid rgba(255,255,255,0.25)',
+            margin: '0 auto 18px',
+            border: '4px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
           }}
         >
           {initials}
         </div>
-        <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: '#fff' }}>
+        <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
           {data?.name || 'Dosen'}
         </h2>
         <span
           style={{
-            background: '#10B981',
-            color: '#fff',
-            fontSize: 11,
+            background: 'rgba(16, 185, 129, 0.2)',
+            color: '#86efac',
+            fontSize: 12,
             fontWeight: 700,
-            padding: '3px 12px',
+            padding: '4px 14px',
             borderRadius: 20,
-            letterSpacing: '0.06em',
+            letterSpacing: '0.05em',
+            display: 'inline-block',
           }}
         >
           Dosen
         </span>
 
-        {/* Quick stats */}
+        {/* Quick Stats */}
         {profile && (
-          <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 24 }}>
             {[
-              { v: profile.total_sessions || 0, l: 'semester ini' },
-              { v: profile.total_meetings || 0, l: 'pertemuan' },
-              { v: `${profile.attendance_rate || 0}%`, l: 'rata-rata' },
+              { v: profile.total_sessions || 0, l: 'Sesi' },
+              { v: profile.total_meetings || 0, l: 'Pertemuan' },
+              { v: `${profile.attendance_rate || 0}%`, l: 'Rata-rata' },
             ].map((s) => (
               <div
                 key={s.l}
                 style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  borderRadius: 12,
-                  padding: '10px 16px',
-                  minWidth: 70,
+                  background: 'rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: 14,
+                  padding: '14px 12px',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
-                <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>{s.v}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{s.l}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>{s.v}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 4, fontWeight: 500 }}>{s.l}</div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Card */}
-      <div style={{ padding: '0 16px', marginTop: -18 }}>
+      {/* Content Card */}
+      <div style={{ padding: '0 16px', marginTop: -18, marginBottom: 24 }}>
         {loading ? (
           <div
             style={{
-              height: 200,
+              height: 400,
               borderRadius: 20,
               background: 'linear-gradient(90deg,#e8ecf4 25%,#f1f4fb 50%,#e8ecf4 75%)',
               backgroundSize: '400% 100%',
@@ -330,43 +367,43 @@ export default function ProfilPage() {
           />
         ) : (
           <>
-            {/* Info card */}
+            {/* Account Info Card */}
             <div
               style={{
                 background: '#fff',
                 borderRadius: 20,
-                padding: '4px 20px',
+                padding: '20px',
                 marginBottom: 16,
                 boxShadow: '0 4px 24px rgba(30,45,120,0.08)',
                 border: '1px solid #e8ecf4',
               }}
             >
-              <div style={{ padding: '14px 0 4px' }}>
-                <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 800, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            <div style={{ marginBottom: 16 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   Informasi Akun
                 </p>
               </div>
               <InfoRow icon="👤" label="Nama Lengkap" value={data?.name} />
-              <InfoRow icon="✉️" label="Email" value={data?.email} />
-              <InfoRow icon="#️⃣" label="NIP" value={data?.nip} />
+              <InfoRow icon="@" label="Email" value={data?.email} />
+              <InfoRow icon="#" label="NIP" value={data?.nip} />
               <InfoRow icon="📚" label="Program Studi" value={data?.department} />
               <InfoRow icon="📖" label="Mata Kuliah" value={data?.courses?.join(', ')} />
               <InfoRow icon="🏛️" label="Jabatan" value={data?.position} />
             </div>
 
-            {/* Settings card */}
+            {/* Settings Card */}
             <div
               style={{
                 background: '#fff',
                 borderRadius: 20,
-                padding: '4px 20px',
+                padding: '20px',
                 marginBottom: 16,
                 boxShadow: '0 4px 24px rgba(30,45,120,0.08)',
                 border: '1px solid #e8ecf4',
               }}
             >
-              <div style={{ padding: '14px 0 4px' }}>
-                <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 800, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   Pengaturan
                 </p>
               </div>
@@ -375,13 +412,13 @@ export default function ProfilPage() {
               <SettingRow icon="❓" label="Bantuan" sublabel="FAQ & Kontak admin" onClick={() => {}} />
             </div>
 
-            {/* Logout */}
+            {/* Logout Button */}
             <button
               onClick={() => setLogoutConfirm(true)}
               style={{
                 width: '100%',
-                padding: '15px',
-                borderRadius: 16,
+                padding: '14px',
+                borderRadius: 14,
                 border: '1.5px solid #fecaca',
                 background: '#fef2f2',
                 color: '#dc2626',
@@ -392,23 +429,30 @@ export default function ProfilPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
-                marginBottom: 8,
+                marginBottom: 12,
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = '#fee2e2';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = '#fef2f2';
               }}
             >
-              🚪 Keluar dari Akun
+              Keluar dari Akun
             </button>
 
-            <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', margin: '8px 0 0' }}>
+            <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', margin: '0' }}>
               SiPresQR • Universitas • v2.0
             </p>
           </>
         )}
       </div>
 
-      {/* Password modal */}
+      {/* Password Modal */}
       {showPassModal && <PasswordModal onClose={() => setShowPassModal(false)} />}
 
-      {/* Logout confirm */}
+      {/* Logout Confirmation Dialog */}
       {logoutConfirm && (
         <div
           style={{
@@ -432,14 +476,29 @@ export default function ProfilPage() {
               width: '100%',
               textAlign: 'center',
               animation: 'fadeIn 0.25s ease',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
             }}
           >
-            <div style={{ fontSize: 44, marginBottom: 12 }}>🚪</div>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              background: '#fee2e2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: 28,
+              fontWeight: 700,
+              color: '#dc2626',
+            }}>
+              —
+            </div>
             <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
               Keluar dari Akun?
             </h3>
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b' }}>
-              Anda akan diarahkan ke halaman login.
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
+              Anda akan diarahkan ke halaman login. Silakan login kembali untuk mengakses sistem.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
@@ -454,6 +513,13 @@ export default function ProfilPage() {
                   fontWeight: 700,
                   cursor: 'pointer',
                   color: '#475569',
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = '#f8fafc';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = '#fff';
                 }}
               >
                 Batal
@@ -465,11 +531,21 @@ export default function ProfilPage() {
                   padding: '12px',
                   borderRadius: 12,
                   border: 'none',
-                  background: '#dc2626',
+                  background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
                   color: '#fff',
                   fontSize: 14,
                   fontWeight: 700,
                   cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.4)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.3)';
                 }}
               >
                 Keluar
