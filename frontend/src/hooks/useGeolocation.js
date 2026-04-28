@@ -1,3 +1,4 @@
+// hooks/useGeolocation.js
 import { useState, useCallback, useRef } from 'react';
 
 export const useGeolocation = () => {

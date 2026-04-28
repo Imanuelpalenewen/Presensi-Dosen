@@ -29,8 +29,8 @@ export default function DosenLayout() {
     navigate('/login');
   };
 
-  const initials = user?.name
-    ? user.name
+  const initials = (user?.nama || user?.name)
+    ? (user.nama || user.name)
         .split(' ')
         .slice(0, 2)
         .map((n) => n[0])
@@ -97,7 +97,7 @@ export default function DosenLayout() {
           {!isMobile && (
             <div style={{ textAlign: 'right', marginRight: 6 }}>
               <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>
-                {user?.name || 'Dosen'}
+                {user?.nama || user?.name || 'Dosen'}
               </div>
               <div
                 style={{

@@ -47,6 +47,8 @@ func (s *DosenService) GetActiveSessions(dosenID uint) ([]SessionWithSchedule, e
 		        schedules.jam_mulai,
 		        schedules.jam_selesai,
 		        schedules.lokasi_nama,
+		        schedules.lokasi_lat,
+		        schedules.lokasi_lng,
 		        schedules.radius_meter`).
 		Joins("JOIN schedules ON schedules.id = sessions.schedule_id").
 		Where(`schedules.dosen_id = ?
@@ -70,6 +72,8 @@ type SessionWithSchedule struct {
 	JamMulai    string    `json:"jam_mulai"`
 	JamSelesai  string    `json:"jam_selesai"`
 	LokasiNama  string    `json:"lokasi_nama"`
+	LokasiLat   float64   `json:"lokasi_lat"`
+	LokasiLng   float64   `json:"lokasi_lng"`
 	RadiusMeter int       `json:"radius_meter"`
 }
 
