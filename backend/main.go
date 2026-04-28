@@ -29,6 +29,8 @@ func main() {
 
 	// Seed dummy users (Admin, Dosen, Warek3)
 	database.SeedUsers(db)
+	database.SeedSchedules(db)
+	database.SeedAttendance(db)
 
 	// Setup router dan jalankan server
 	r := routes.SetupRouter(db, cfg)

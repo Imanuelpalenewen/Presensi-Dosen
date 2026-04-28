@@ -237,7 +237,6 @@ type SessionActivationResult struct {
 	ID            uint      `json:"id"`
 	QrToken       string    `json:"qr_token"`
 	ExpiredAt     time.Time `json:"expired_at"`
-	ShareableLink string    `json:"shareable_link"` // link yang bisa dibagikan ke dosen
 }
 
 // ActivateSession: buat sesi baru untuk jadwal tertentu
@@ -278,8 +277,6 @@ func (s *AdminService) ActivateSession(scheduleID uint) (*SessionActivationResul
 		ID:        session.ID,
 		QrToken:   qrToken,
 		ExpiredAt: expiredAt,
-		// TODO: Ganti base URL sesuai deployment
-		ShareableLink: fmt.Sprintf("http://localhost:3000/dosen/absen?token=%s", qrToken),
 	}, nil
 }
 

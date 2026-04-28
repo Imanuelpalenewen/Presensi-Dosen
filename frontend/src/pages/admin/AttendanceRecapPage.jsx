@@ -11,9 +11,10 @@
 // ============================================================
 
 import React, { useState, useEffect } from 'react'
+import * as XLSX from 'xlsx'
 import LoadingSpinner from '../../components/common/LoadingSpinner'
 import { getAttendanceRecap, getDosenAttendanceDetail } from '../../services/adminService'
-import { ChevronDown, ChevronRight, CheckCircle, XCircle, Search, Calendar, FileSpreadsheet, UserCheck, AlertCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle, XCircle, Search, Calendar, FileSpreadsheet, UserCheck, AlertCircle, Users, PieChart } from 'lucide-react'
 
 
 export default function AttendanceRecapPage() {
@@ -72,6 +73,31 @@ export default function AttendanceRecapPage() {
     return 'text-red-600 bg-red-50 border-red-200'
   }
 
+  const totalDosen = recap.length;
+  const totalPertemuan = recap.reduce((sum, item) => sum + (item.total_pertemuan || 0), 0);
+  const totalHadir = recap.reduce((sum, item) => sum + (item.total_hadir || 0), 0);
+  const avgKehadiran = totalPertemuan === 0 ? 0 : (totalHadir / totalPertemuan) * 100;
+
+  const handleExportExcel = () => {
+    if (recap.length === 0) {
+      alert("Tidak ada data untuk diexport");
+      return;
+    }
+
+    const dataToExport = recap.map(item => ({
+      "Nama Dosen": item.nama,
+      "Hadir": item.total_hadir,
+      "Tidak Hadir": item.total_pertemuan - item.total_hadir,
+      "Persentase": `${item.persentase?.toFixed(1)}%`
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Kehadiran");
+    
+    XLSX.writeFile(workbook, `Rekap_Kehadiran_${bulan}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -98,12 +124,60 @@ export default function AttendanceRecapPage() {
                 className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+            >
               <FileSpreadsheet size={16} />
               <span className="hidden sm:inline">Export Excel</span>
             </button>
           </div>
         </div>
+
+        {/* Analytics Cards */}
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                <Users size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Dosen</p>
+                <h3 className="text-2xl font-bold text-gray-800">{totalDosen}</h3>
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+                <Calendar size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Sesi</p>
+                <h3 className="text-2xl font-bold text-gray-800">{totalPertemuan}</h3>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 shrink-0">
+                <CheckCircle size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Hadir</p>
+                <h3 className="text-2xl font-bold text-gray-800">{totalHadir}</h3>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 shrink-0">
+                <PieChart size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Rata-rata Kehadiran</p>
+                <h3 className="text-2xl font-bold text-gray-800">{avgKehadiran.toFixed(1)}%</h3>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative mb-6">

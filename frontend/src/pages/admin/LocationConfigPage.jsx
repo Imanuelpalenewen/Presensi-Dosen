@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from 'react'
 import LoadingSpinner from '../../components/common/LoadingSpinner'
 import { getAllSchedules, updateScheduleLocation } from '../../services/adminService'
-import { MapPin, Navigation, Edit, Save, X, ExternalLink, Info, Search } from 'lucide-react'
+import { MapPin, Navigation, Edit, Save, X, ExternalLink, Info, Search, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function LocationConfigPage() {
   const [schedules, setSchedules] = useState([])
@@ -103,6 +103,28 @@ export default function LocationConfigPage() {
           </div>
         </div>
 
+        {/* Panduan Pengaturan Radius */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Panduan Pengaturan Radius</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+              <div className="font-bold text-green-600 text-lg mb-1">30–100m</div>
+              <div className="text-sm font-semibold text-gray-800 mb-1">Indoor (Lab/Kelas)</div>
+              <div className="text-xs text-gray-500">Ruang yang terbatas, GPS lebih presisi</div>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+              <div className="font-bold text-orange-500 text-lg mb-1">100–150m</div>
+              <div className="text-sm font-semibold text-gray-800 mb-1">Outdoor (Lapangan/Aula)</div>
+              <div className="text-xs text-gray-500">Area terbuka, sinyal bisa berfluktuasi</div>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+              <div className="font-bold text-blue-800 text-lg mb-1">100m</div>
+              <div className="text-sm font-semibold text-gray-800 mb-1">Default</div>
+              <div className="text-xs text-gray-500">Direkomendasikan untuk kebanyakan kasus</div>
+            </div>
+          </div>
+        </div>
+
         {/* Panduan Penggunaan Google Maps */}
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 flex gap-4">
           <Info className="text-blue-500 flex-shrink-0 mt-0.5" />
@@ -130,11 +152,20 @@ export default function LocationConfigPage() {
                   {/* Header / Info Section */}
                   <div className="p-5 flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center flex-wrap gap-2 mb-1">
                         <h4 className="font-bold text-gray-800 text-lg">{schedule.mata_kuliah}</h4>
                         <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
                           Kelas {schedule.kelas}
                         </span>
+                        {schedule.lokasi_lat !== 0 && schedule.lokasi_lng !== 0 ? (
+                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 border border-green-200 flex items-center gap-1">
+                            <CheckCircle size={12} /> Terkonfigurasi
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200 flex items-center gap-1">
+                            <AlertCircle size={12} /> Perlu Konfigurasi
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-gray-500 mb-2">
                         {schedule.dosen?.nama} • {schedule.hari}, {schedule.jam_mulai} - {schedule.jam_selesai}

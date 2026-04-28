@@ -222,7 +222,6 @@ export default function ProfilPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPassModal, setShowPassModal] = useState(false);
-  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   useEffect(() => {
     dosenService
@@ -231,11 +230,6 @@ export default function ProfilPage() {
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
   }, []);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const initials = (user?.name || 'D')
     .split(' ')
@@ -375,29 +369,6 @@ export default function ProfilPage() {
               <SettingRow icon="❓" label="Bantuan" sublabel="FAQ & Kontak admin" onClick={() => {}} />
             </div>
 
-            {/* Logout */}
-            <button
-              onClick={() => setLogoutConfirm(true)}
-              style={{
-                width: '100%',
-                padding: '15px',
-                borderRadius: 16,
-                border: '1.5px solid #fecaca',
-                background: '#fef2f2',
-                color: '#dc2626',
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                marginBottom: 8,
-              }}
-            >
-              🚪 Keluar dari Akun
-            </button>
-
             <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', margin: '8px 0 0' }}>
               SiPresQR • Universitas • v2.0
             </p>
@@ -407,77 +378,6 @@ export default function ProfilPage() {
 
       {/* Password modal */}
       {showPassModal && <PasswordModal onClose={() => setShowPassModal(false)} />}
-
-      {/* Logout confirm */}
-      {logoutConfirm && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            background: 'rgba(15,23,42,0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          <div
-            style={{
-              background: '#fff',
-              borderRadius: 20,
-              padding: 28,
-              maxWidth: 340,
-              width: '100%',
-              textAlign: 'center',
-              animation: 'fadeIn 0.25s ease',
-            }}
-          >
-            <div style={{ fontSize: 44, marginBottom: 12 }}>🚪</div>
-            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
-              Keluar dari Akun?
-            </h3>
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b' }}>
-              Anda akan diarahkan ke halaman login.
-            </p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setLogoutConfirm(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: 12,
-                  border: '1.5px solid #e2e8f0',
-                  background: '#fff',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  color: '#475569',
-                }}
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleLogout}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: 12,
-                  border: 'none',
-                  background: '#dc2626',
-                  color: '#fff',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Keluar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }

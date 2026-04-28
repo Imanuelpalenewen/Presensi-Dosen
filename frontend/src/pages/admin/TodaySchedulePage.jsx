@@ -44,11 +44,11 @@ function SessionBadge({ session }) {
 
 function QRModal({ session, scheduleInfo, onClose, onClose_session }) {
   const { display, expired } = useCountdown(session.expired_at);
-  const shareLink = session.shareable_link || `${window.location.origin}/dosen/absen?token=${session.qr_token}`;
+  const token = session.qr_token;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(shareLink).then(() => {
+    navigator.clipboard.writeText(token).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -85,7 +85,7 @@ function QRModal({ session, scheduleInfo, onClose, onClose_session }) {
           border: expired ? '2px solid #fca5a5' : '2px solid #bbf7d0',
           opacity: expired ? 0.5 : 1,
         }}>
-          <QRCodeSVG value={shareLink} size={200} level="M" includeMargin={false} />
+          <QRCodeSVG value={token} size={200} level="M" includeMargin={false} />
         </div>
 
         {/* Countdown */}
@@ -104,10 +104,10 @@ function QRModal({ session, scheduleInfo, onClose, onClose_session }) {
           </span>
         </div>
 
-        {/* Share Link */}
+        {/* Token String */}
         <div style={{ width: '100%' }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Link Absensi
+            Token Absensi
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <div style={{
@@ -115,7 +115,7 @@ function QRModal({ session, scheduleInfo, onClose, onClose_session }) {
               padding: '8px 12px', fontSize: 12, color: '#475569',
               fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-              {shareLink}
+              {token}
             </div>
             <button
               id="copy-link-btn"
@@ -129,17 +129,8 @@ function QRModal({ session, scheduleInfo, onClose, onClose_session }) {
               }}
             >
               {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
-              {copied ? 'Disalin!' : 'Salin'}
+              {copied ? 'Disalin!' : 'Salin Token'}
             </button>
-            <a
-              href={shareLink} target="_blank" rel="noreferrer"
-              style={{
-                padding: '8px', borderRadius: 8, background: '#e2e8f0',
-                color: '#64748b', display: 'flex', alignItems: 'center',
-              }}
-            >
-              <ExternalLink size={14} />
-            </a>
           </div>
         </div>
 
@@ -317,19 +308,39 @@ export default function TodaySchedulePage() {
     }
   };
 
-  const activeCount = schedules.filter((s) => s.session?.status === 'active').length;
+  const totalSchedules = schedules.length;
+  const activeSchedules = schedules.filter((s) => s.session?.status === 'active').length;
+  const unstartedSchedules = schedules.filter((s) => !s.session).length;
+  const completedSchedules = schedules.filter((s) => s.session?.status === 'closed' || s.session?.status === 'expired').length;
 
   return (
     <div style={{ padding: '32px 32px 48px', maxWidth: 900, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500, marginBottom: 4 }}>{today}</div>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#1e293b', letterSpacing: '-0.5px' }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#1e293b', letterSpacing: '-0.5px', marginBottom: 16 }}>
           Jadwal Hari Ini
         </h1>
-        {activeCount > 0 && (
-          <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: '#dcfce7', color: '#15803d', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 20 }}>
-            <CheckCircle size={14} /> {activeCount} sesi aktif berjalan
+        
+        {/* Summary Section */}
+        {!loading && totalSchedules > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 8 }}>
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Total Jadwal</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#1e293b' }}>{totalSchedules}</span>
+            </div>
+            <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#166534', fontWeight: 600, textTransform: 'uppercase' }}>Sesi Aktif</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#15803d' }}>{activeSchedules}</span>
+            </div>
+            <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#475569', fontWeight: 600, textTransform: 'uppercase' }}>Belum Dimulai</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#334155' }}>{unstartedSchedules}</span>
+            </div>
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#991b1b', fontWeight: 600, textTransform: 'uppercase' }}>Selesai / Ditutup</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#b91c1c' }}>{completedSchedules}</span>
+            </div>
           </div>
         )}
       </div>

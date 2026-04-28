@@ -11,11 +11,10 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/admin/jadwal-hari-ini', label: 'Hari Ini', icon: LayoutDashboard },
+  { to: '/admin/jadwal-hari-ini', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/jadwal', label: 'Jadwal', icon: CalendarDays },
-  { to: '/admin/rekap', label: 'Rekap Absensi', icon: ClipboardList },
-  { to: '/admin/lokasi', label: 'Lokasi', icon: MapPin },
-  { to: '/admin/pesan', label: 'Inbox Pesan', icon: Inbox },
+  { to: '/admin/rekap', label: 'Rekap', icon: ClipboardList },
+  { to: '/admin/pesan', label: 'Pesan', icon: Inbox },
 ];
 
 export default function AdminLayout() {
@@ -36,104 +35,72 @@ export default function AdminLayout() {
     .toUpperCase() || 'A';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100dvh', background: '#f1f5f9', fontFamily: "'Plus Jakarta Sans','Segoe UI',sans-serif" }}>
-      {/* ── Sidebar ── */}
-      <aside style={{
-        width: 256,
-        flexShrink: 0,
-        background: 'linear-gradient(180deg,#1E2D78 0%,#162060 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'sticky',
-        top: 0,
-        height: '100dvh',
-        overflowY: 'auto',
-        boxShadow: '4px 0 20px rgba(30,45,120,0.18)',
-      }}>
+    <div className="flex min-h-screen bg-slate-100 font-sans">
+      {/* ── Sidebar (Desktop) ── */}
+      <aside className="hidden md:flex w-64 shrink-0 flex-col sticky top-0 h-screen overflow-y-auto shadow-[4px_0_20px_rgba(30,45,120,0.18)]" style={{ background: 'linear-gradient(180deg,#1E2D78 0%,#162060 100%)' }}>
         {/* Brand */}
-        <div style={{ padding: '28px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: 'rgba(255,255,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backdropFilter: 'blur(10px)',
-            }}>
+        <div className="px-6 pt-7 pb-5 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-md">
               <QrCode size={20} color="#fff" />
             </div>
             <div>
-              <div style={{ color: '#fff', fontWeight: 800, fontSize: 16, letterSpacing: '-0.3px' }}>SiPresQR</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 1 }}>Admin Panel</div>
+              <div className="text-white font-extrabold text-base tracking-tight">SiPresQR</div>
+              <div className="text-white/45 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Admin Panel</div>
             </div>
           </div>
         </div>
 
         {/* Nav Items */}
-        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
           {navItems.map(({ to, label, icon: Icon }) => {
             const active = location.pathname === to;
             return (
               <button
                 key={to}
-                id={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
                 onClick={() => navigate(to)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 14px',
-                  border: 'none',
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  transition: 'all 0.18s',
-                  background: active ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  color: active ? '#fff' : 'rgba(255,255,255,0.55)',
-                  fontWeight: active ? 700 : 500,
-                  fontSize: 14,
-                  fontFamily: "'Plus Jakarta Sans','Segoe UI',sans-serif",
-                  width: '100%',
-                  textAlign: 'left',
-                  boxShadow: active ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) e.currentTarget.style.background = 'transparent';
-                }}
+                className={`flex items-center gap-3 px-3.5 py-2.5 border-none rounded-xl cursor-pointer transition-all duration-150 w-full text-left text-sm
+                  ${active 
+                    ? 'bg-white/15 text-white font-bold shadow-[0_2px_8px_rgba(0,0,0,0.12)]' 
+                    : 'bg-transparent text-white/55 font-medium hover:bg-white/10'
+                  }
+                `}
               >
                 <Icon size={18} />
                 {label}
               </button>
             );
           })}
+          
+          {/* Lokasi (Only visible in sidebar, not on mobile nav) */}
+          <button
+                onClick={() => navigate('/admin/lokasi')}
+                className={`flex items-center gap-3 px-3.5 py-2.5 border-none rounded-xl cursor-pointer transition-all duration-150 w-full text-left text-sm mt-1
+                  ${location.pathname === '/admin/lokasi' 
+                    ? 'bg-white/15 text-white font-bold shadow-[0_2px_8px_rgba(0,0,0,0.12)]' 
+                    : 'bg-transparent text-white/55 font-medium hover:bg-white/10'
+                  }
+                `}
+              >
+                <MapPin size={18} />
+                Lokasi
+          </button>
         </nav>
 
         {/* User + Logout */}
-        <div style={{ padding: '16px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', marginBottom: 8 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 700, fontSize: 14, color: '#fff', flexShrink: 0,
-            }}>{initials}</div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.nama || 'Admin'}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 1 }}>Administrator</div>
+        <div className="p-3 border-t border-white/10">
+          <div className="flex items-center gap-2.5 px-3.5 py-2.5 mb-2">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 bg-gradient-to-br from-indigo-500 to-purple-500">
+              {initials}
+            </div>
+            <div className="overflow-hidden">
+              <div className="text-white text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{user?.nama || 'Admin'}</div>
+              <div className="text-white/40 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Administrator</div>
             </div>
           </div>
           <button
-            id="admin-logout-btn"
             onClick={handleLogout}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px', border: 'none', borderRadius: 10,
-              cursor: 'pointer', transition: 'all 0.18s',
-              background: 'rgba(239,68,68,0.12)',
-              color: '#fca5a5', fontWeight: 600, fontSize: 14,
-              fontFamily: "'Plus Jakarta Sans','Segoe UI',sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.22)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 border-none rounded-xl cursor-pointer transition-all duration-150 bg-red-500/10 text-red-300 font-semibold text-sm hover:bg-red-500/20"
           >
             <LogOut size={16} />
             Keluar
@@ -142,9 +109,44 @@ export default function AdminLayout() {
       </aside>
 
       {/* ── Main Content ── */}
-      <main style={{ flex: 1, overflowX: 'hidden', minHeight: '100dvh' }}>
+      <main className="flex-1 overflow-x-hidden min-h-screen pb-16 md:pb-0">
         <Outlet />
       </main>
+
+      {/* ── Bottom Navbar (Mobile) ── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-50">
+        {navItems.map(({ to, label, icon: Icon }) => {
+          const active = location.pathname === to;
+          return (
+            <button
+              key={to}
+              onClick={() => navigate(to)}
+              className={`flex flex-col items-center justify-center w-16 gap-1 p-1 transition-colors
+                ${active ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}
+              `}
+            >
+              <div className={`p-1.5 rounded-full transition-all duration-200 ${active ? 'bg-indigo-50' : 'bg-transparent'}`}>
+                <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+              </div>
+              <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
+        {/* Logout Button Mobile */}
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center w-16 gap-1 p-1 transition-colors text-slate-400 hover:text-slate-600"
+        >
+          <div className="p-1.5 rounded-full transition-all duration-200 bg-transparent">
+            <LogOut size={20} strokeWidth={2} />
+          </div>
+          <span className="text-[10px] font-medium">
+            Keluar
+          </span>
+        </button>
+      </nav>
     </div>
   );
 }
