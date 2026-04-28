@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import ProtectedRoute from '../components/common/ProtectedRoute';
 
 // Auth
@@ -12,21 +13,21 @@ import AttendanceHistoryPage from '../pages/dosen/AttendanceHistoryPage';
 import ProfilePage from '../pages/dosen/ProfilePage';
 import ReportIssuePage from '../pages/dosen/ReportIssuePage';
 
-// Admin (existing)
+// Admin
 import TodaySchedulePage from '../pages/admin/TodaySchedulePage';
 import ScheduleManagementPage from '../pages/admin/ScheduleManagementPage';
 import AttendanceRecapPage from '../pages/admin/AttendanceRecapPage';
 import LocationConfigPage from '../pages/admin/LocationConfigPage';
 import MessageInboxPage from '../pages/admin/MessageInboxPage';
+import AdminLayout from '../components/admin/AdminLayout';
 
-// Warek (existing)
+// Warek
 import WarekDashboardPage from '../pages/warek/WarekDashboardPage';
 import WarekRecapPage from '../pages/warek/WarekRecapPage';
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -53,8 +54,7 @@ export default function AppRouter() {
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              {/* Wrap in your existing admin layout if available */}
-              <div />
+              <AdminLayout />
             </ProtectedRoute>
           }
         >
@@ -71,7 +71,7 @@ export default function AppRouter() {
           path="/warek"
           element={
             <ProtectedRoute allowedRoles={['warek3']}>
-              <div />
+              <Outlet />
             </ProtectedRoute>
           }
         >
@@ -83,6 +83,5 @@ export default function AppRouter() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </BrowserRouter>
   );
 }
