@@ -11,24 +11,10 @@
 // ============================================================
 
 import React, { useState, useEffect } from 'react'
-import Navbar from '../../components/common/Navbar'
 import LoadingSpinner from '../../components/common/LoadingSpinner'
 import { getAttendanceRecap, getDosenAttendanceDetail } from '../../services/adminService'
 import { ChevronDown, ChevronRight, CheckCircle, XCircle, Search, Calendar, FileSpreadsheet, UserCheck, AlertCircle } from 'lucide-react'
 
-// --- Mock Data Fallback ---
-const MOCK_RECAP = [
-  { dosen_id: 991, nama: "Dr. Budi Santoso, M.Kom (Mock)", total_hadir: 14, total_pertemuan: 16, persentase: 87.5 },
-  { dosen_id: 992, nama: "Siti Aminah, S.T., M.T. (Mock)", total_hadir: 12, total_pertemuan: 12, persentase: 100 },
-  { dosen_id: 993, nama: "Ahmad Zainudin, Ph.D (Mock)", total_hadir: 6, total_pertemuan: 10, persentase: 60 }
-];
-
-const MOCK_DETAILS = [
-  { id: 1, mata_kuliah: "Struktur Data", tanggal: "2024-04-01", status_kehadiran: "Hadir", jam_absen: "08:05:12" },
-  { id: 2, mata_kuliah: "Struktur Data", tanggal: "2024-04-08", status_kehadiran: "Hadir", jam_absen: "08:10:00" },
-  { id: 3, mata_kuliah: "Struktur Data", tanggal: "2024-04-15", status_kehadiran: "Tidak Hadir", jam_absen: "-" }
-];
-// --------------------------
 
 export default function AttendanceRecapPage() {
   const [recap, setRecap] = useState([])
@@ -45,15 +31,10 @@ export default function AttendanceRecapPage() {
       setLoading(true)
       try {
         const res = await getAttendanceRecap({ bulan })
-        let data = res.data || [];
-        // Fallback to mock data if empty (since DB might not have enough records for testing yet)
-        if (data.length === 0) {
-          data = MOCK_RECAP;
-        }
-        setRecap(data)
+        setRecap(res.data || [])
       } catch (err) {
         console.error('Gagal ambil rekap:', err)
-        setRecap(MOCK_RECAP) // Fallback on error
+        setRecap([])
       } finally {
         setLoading(false)
       }
@@ -66,22 +47,15 @@ export default function AttendanceRecapPage() {
       setExpandedId(null)
       return
     }
-
     setExpandedId(dosenId)
-    
-    // Fetch details if not already fetched
     if (!details[dosenId]) {
       setDetailsLoading(true)
       try {
         const res = await getDosenAttendanceDetail(dosenId, { bulan })
-        let detailData = res.data || [];
-        if (detailData.length === 0 && dosenId >= 991) { // Apply mock details only to mock dosens
-          detailData = MOCK_DETAILS;
-        }
-        setDetails(prev => ({ ...prev, [dosenId]: detailData }))
+        setDetails(prev => ({ ...prev, [dosenId]: res.data || [] }))
       } catch (err) {
         console.error('Gagal ambil detail:', err)
-        setDetails(prev => ({ ...prev, [dosenId]: MOCK_DETAILS }))
+        setDetails(prev => ({ ...prev, [dosenId]: [] }))
       } finally {
         setDetailsLoading(false)
       }
@@ -100,7 +74,6 @@ export default function AttendanceRecapPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <Navbar />
       <div className="max-w-5xl mx-auto px-4 py-8">
         
         {/* Header Area */}

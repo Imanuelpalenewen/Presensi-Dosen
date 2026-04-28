@@ -13,7 +13,6 @@
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/common/Navbar';
 import { getAllSchedules, deleteSchedule } from '../../services/adminService';
 import ScheduleFormModal from '../../components/admin/ScheduleFormModal';
 import { Plus, Edit, Trash2, Search, MapPin } from 'lucide-react';
@@ -77,7 +76,6 @@ export default function ScheduleManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Manajemen Jadwal</h2>

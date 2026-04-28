@@ -157,8 +157,8 @@ function SessionCard({ session, onAbsen, submitting, absenDone }) {
       const d = haversineDistance(
         coords.latitude,
         coords.longitude,
-        session.class_latitude,
-        session.class_longitude
+        session.lokasi_lat,
+        session.lokasi_lng
       );
       setDistance(d);
     } catch {
@@ -203,7 +203,7 @@ function SessionCard({ session, onAbsen, submitting, absenDone }) {
 
       {/* Course Title */}
       <h2 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: '0 0 18px', letterSpacing: '-0.5px' }}>
-        {session.course_name}
+        {session.mata_kuliah}
       </h2>
 
       {/* Info Grid - Responsive */}
@@ -217,9 +217,9 @@ function SessionCard({ session, onAbsen, submitting, absenDone }) {
         borderRadius: '14px',
       }}>
         {[
-          { label: 'Kelas', value: `${session.class_code}` },
-          { label: 'Waktu', value: `${formatTime(session.start_time)}–${formatTime(session.end_time)} WIB` },
-          { label: 'Lokasi', value: session.location_name || 'Tidak diatur' },
+          { label: 'Kelas', value: `${session.kelas}` },
+          { label: 'Waktu', value: `${session.jam_mulai}–${session.jam_selesai} WIB` },
+          { label: 'Lokasi', value: session.lokasi_nama || 'Tidak diatur' },
           { label: 'Radius', value: `${session.radius_meter}m` },
         ].map(({ label, value }) => (
           <div key={label}>
@@ -443,7 +443,8 @@ export default function TakeAttendancePage() {
       setPageLoading(true);
       setPageError(null);
       const res = await dosenService.getActiveSession();
-      setSession(res.data?.data || null);
+      const sessions = res.data?.data || [];
+      setSession(Array.isArray(sessions) ? sessions[0] || null : sessions || null);
     } catch (err) {
       if (err.response?.status === 404) {
         setSession(null);
@@ -526,7 +527,7 @@ export default function TakeAttendancePage() {
           {formatGreeting()}
         </p>
         <h1 style={{ margin: '6px 0 4px', fontSize: 28, fontWeight: 800, color: '#1e293b', letterSpacing: '-0.5px' }}>
-          {user?.name || 'Dosen'}
+          {user?.nama || 'Dosen'}
         </h1>
         <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>{formatDateId()}</p>
       </div>

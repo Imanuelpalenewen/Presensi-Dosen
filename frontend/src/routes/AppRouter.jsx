@@ -19,6 +19,7 @@ import ScheduleManagementPage from '../pages/admin/ScheduleManagementPage';
 import AttendanceRecapPage from '../pages/admin/AttendanceRecapPage';
 import LocationConfigPage from '../pages/admin/LocationConfigPage';
 import MessageInboxPage from '../pages/admin/MessageInboxPage';
+import AdminLayout from '../components/admin/AdminLayout';
 
 // Warek
 import WarekDashboardPage from '../pages/warek/WarekDashboardPage';
@@ -53,7 +54,7 @@ export default function AppRouter() {
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <Outlet />
+              <AdminLayout />
             </ProtectedRoute>
           }
         >

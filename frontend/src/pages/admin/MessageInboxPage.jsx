@@ -12,7 +12,6 @@
 // ============================================================
 
 import React, { useEffect, useState } from 'react'
-import Navbar from '../../components/common/Navbar'
 import LoadingSpinner from '../../components/common/LoadingSpinner'
 import { getAdminMessages, markMessageAsRead } from '../../services/messageService'
 import { Mail, MailOpen, AlertCircle, Clock, MapPin, User, CheckCircle2 } from 'lucide-react'
@@ -67,7 +66,6 @@ export default function MessageInboxPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
