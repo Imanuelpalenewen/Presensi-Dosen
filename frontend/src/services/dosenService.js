@@ -1,6 +1,6 @@
 // ============================================================
 // services/dosenService.js
-// ✅ [ANGGOTA 1 - KAMU] Semua API call khusus fitur Dosen.
+// ✅ [ANGGOTA 1] Semua API call khusus fitur Dosen.
 // ============================================================
 
 import api from './api'

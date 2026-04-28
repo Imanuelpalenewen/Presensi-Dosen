@@ -1,6 +1,6 @@
 // ============================================================
 // pages/dosen/AttendanceHistoryPage.jsx
-// ✅ [ANGGOTA 1 - KAMU] Halaman riwayat absensi dosen.
+// ✅ [ANGGOTA 1] Halaman riwayat absensi dosen.
 //
 // Fitur yang harus dibuat:
 //  1. Dropdown filter bulan (default: bulan ini)

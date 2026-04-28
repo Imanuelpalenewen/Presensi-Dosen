@@ -1,6 +1,6 @@
 // ============================================================
 // pages/dosen/TakeAttendancePage.jsx
-// ✅ [ANGGOTA 1 - KAMU] Halaman utama absensi dosen (SIMPLIFIED)
+// ✅ [ANGGOTA 1] Halaman utama absensi dosen (SIMPLIFIED)
 // ============================================================
 
 import Navbar from '../../components/common/Navbar'

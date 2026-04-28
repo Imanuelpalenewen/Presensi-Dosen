@@ -1,6 +1,6 @@
 // ============================================================
 // internal/handlers/dosen_handler.go
-// ✅ [ANGGOTA 1 - KAMU] Handler HTTP untuk semua endpoint Dosen.
+// ✅ [ANGGOTA 1] Handler HTTP untuk semua endpoint Dosen.
 //
 // Endpoint yang harus diimplementasi:
 //   GET  /api/dosen/sessions/active     → GetActiveSessions

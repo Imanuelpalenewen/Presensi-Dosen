@@ -98,8 +98,51 @@ func (s *AdminService) GetTodaySchedules() (interface{}, error) {
 	return result, nil
 }
 
+// checkScheduleOverlap checks if a new schedule overlaps with existing ones, enforcing a 10-minute gap.
+func (s *AdminService) checkScheduleOverlap(dosenID uint, hari string, jamMulai, jamSelesai string, excludeScheduleID uint) error {
+	newStart, err := time.Parse("15:04", jamMulai)
+	if err != nil {
+		return errors.New("format jam mulai tidak valid")
+	}
+	newEnd, err := time.Parse("15:04", jamSelesai)
+	if err != nil {
+		return errors.New("format jam selesai tidak valid")
+	}
+
+	if newStart.After(newEnd) || newStart.Equal(newEnd) {
+		return errors.New("jam mulai harus lebih awal dari jam selesai")
+	}
+
+	newStartMargin := newStart.Add(-10 * time.Minute)
+	newEndMargin := newEnd.Add(10 * time.Minute)
+
+	var existingSchedules []models.Schedule
+	query := s.db.Where("dosen_id = ? AND hari = ?", dosenID, hari)
+	if excludeScheduleID > 0 {
+		query = query.Where("id != ?", excludeScheduleID)
+	}
+
+	if err := query.Find(&existingSchedules).Error; err != nil {
+		return err
+	}
+
+	for _, ext := range existingSchedules {
+		extStart, _ := time.Parse("15:04", ext.JamMulai)
+		extEnd, _ := time.Parse("15:04", ext.JamSelesai)
+
+		if newStartMargin.Before(extEnd) && newEndMargin.After(extStart) {
+			return fmt.Errorf("jadwal bentrok dengan mata kuliah %s (%s - %s) karena aturan jeda 10 menit", ext.MataKuliah, ext.JamMulai, ext.JamSelesai)
+		}
+	}
+
+	return nil
+}
+
 // CreateSchedule: tambah jadwal baru
 func (s *AdminService) CreateSchedule(req ScheduleRequest) (*models.Schedule, error) {
+	if err := s.checkScheduleOverlap(req.DosenID, req.Hari, req.JamMulai, req.JamSelesai, 0); err != nil {
+		return nil, err
+	}
 	schedule := models.Schedule{
 		DosenID:     req.DosenID,
 		MataKuliah:  req.MataKuliah,
@@ -127,6 +170,10 @@ func (s *AdminService) UpdateSchedule(id uint, req ScheduleRequest) (*models.Sch
 	var schedule models.Schedule
 	if err := s.db.First(&schedule, id).Error; err != nil {
 		return nil, errors.New("jadwal tidak ditemukan")
+	}
+
+	if err := s.checkScheduleOverlap(req.DosenID, req.Hari, req.JamMulai, req.JamSelesai, id); err != nil {
+		return nil, err
 	}
 
 	// TODO: Update semua field dari request

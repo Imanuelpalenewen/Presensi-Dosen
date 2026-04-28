@@ -1,6 +1,6 @@
 // ============================================================
 // pages/dosen/ReportIssuePage.jsx
-// ✅ [ANGGOTA 1 - KAMU] Halaman laporan kendala dosen ke admin.
+// ✅ [ANGGOTA 1] Halaman laporan kendala dosen ke admin.
 //
 // Fitur ini digunakan ketika dosen TIDAK BISA melakukan absensi
 // karena kendala teknis (GPS mati, sesi expired, sinyal lemah, dll).

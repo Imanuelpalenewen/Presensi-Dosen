@@ -127,9 +127,9 @@ export default function LoginPage() {
           <div className="mt-10 pt-6 border-t border-slate-100">
             <p className="text-xs text-center font-bold text-slate-400 mb-4 uppercase tracking-widest">Demo Akses Cepat</p>
             <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-              <button onClick={() => fillAndSubmit('dosen@mail.com', 'dosen123')} className="flex-1 min-w-[80px] py-2 px-1 text-[11px] font-semibold bg-slate-50 text-slate-600 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all">🎓 Dosen</button>
-              <button onClick={() => fillAndSubmit('admin@mail.com', 'admin123')} className="flex-1 min-w-[80px] py-2 px-1 text-[11px] font-semibold bg-slate-50 text-slate-600 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all">🛠️ Admin</button>
-              <button onClick={() => fillAndSubmit('warek@mail.com', 'warek123')} className="flex-1 min-w-[80px] py-2 px-1 text-[11px] font-semibold bg-slate-50 text-slate-600 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all">📊 Warek</button>
+              <button onClick={() => fillAndSubmit('dosen@mail.com', 'dosen123')} className="flex-1 min-w-[80px] py-2 px-1 text-[11px] font-semibold bg-slate-50 text-slate-600 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all">Dosen</button>
+              <button onClick={() => fillAndSubmit('admin@mail.com', 'admin123')} className="flex-1 min-w-[80px] py-2 px-1 text-[11px] font-semibold bg-slate-50 text-slate-600 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all">Admin</button>
+              <button onClick={() => fillAndSubmit('warek@mail.com', 'warek123')} className="flex-1 min-w-[80px] py-2 px-1 text-[11px] font-semibold bg-slate-50 text-slate-600 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all">Warek</button>
             </div>
           </div>
         </div>

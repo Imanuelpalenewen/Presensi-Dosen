@@ -15,7 +15,7 @@ import ProtectedRoute from '../components/common/ProtectedRoute'
 // Auth
 import LoginPage from '../pages/auth/LoginPage'
 
-// ─── [ANGGOTA 1 - KAMU] Halaman Dosen ───────────────────────
+// ─── [ANGGOTA 1] Halaman Dosen ───────────────────────
 import TakeAttendancePage from '../pages/dosen/TakeAttendancePage'
 import AttendanceHistoryPage from '../pages/dosen/AttendanceHistoryPage'
 import ReportIssuePage from '../pages/dosen/ReportIssuePage'
@@ -39,7 +39,7 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* ─── Dosen Routes [ANGGOTA 1 - KAMU] ─── */}
+        {/* ─── Dosen Routes [ANGGOTA 1] ─── */}
         <Route element={<ProtectedRoute allowedRoles={['dosen']} />}>
           <Route path="/dosen/absen" element={<TakeAttendancePage />} />
           <Route path="/dosen/riwayat" element={<AttendanceHistoryPage />} />

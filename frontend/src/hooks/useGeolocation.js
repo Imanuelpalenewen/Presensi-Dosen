@@ -1,6 +1,6 @@
 // ============================================================
 // hooks/useGeolocation.js
-// ✅ [ANGGOTA 1 - KAMU] Custom hook untuk ambil koordinat GPS browser.
+// ✅ [ANGGOTA 1] Custom hook untuk ambil koordinat GPS browser.
 // Digunakan di TakeAttendancePage dan AttendanceModal.
 // ============================================================
 
