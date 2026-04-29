@@ -56,7 +56,7 @@ const RekapDosen = () => {
         <h4 className="text-lg font-bold text-gray-800">Rekap Kehadiran Per Dosen</h4>
         
         {/* Filter Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 no-print">
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Cari Nama</label>
             <input 
