@@ -79,6 +79,7 @@ const RekapDosen = () => {
               <option value="">Semua Prodi</option>
               <option value="Informatika">Informatika</option>
               <option value="Sistem Informasi">Sistem Informasi</option>
+              <option value="DKV">DKV</option>
               <option value="Teknik Komputer">Teknik Komputer</option>
             </select>
           </div>
