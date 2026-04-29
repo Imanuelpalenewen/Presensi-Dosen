@@ -60,6 +60,13 @@ const dosenService = {
    * Body: { judul, isi, session_id? }
    */
   sendMessage: (data) => api.post('/messages/send', data),
+
+  /**
+   * Ambil semua pesan yang sudah pernah dikirim oleh dosen ini.
+   * GET /messages/my
+   * Response: array of messages
+   */
+  getMyMessages: () => api.get('/messages/my'),
 };
 
 export default dosenService;

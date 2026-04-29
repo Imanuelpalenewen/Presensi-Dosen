@@ -76,10 +76,11 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		attendance.POST("/submit-token", dosenHandler.SubmitAttendanceByToken) // QR token submission
 	}
 
-	// Messages: dosen kirim, admin baca (route send ada di group messages)
+	// Messages: dosen kirim & lihat riwayat, admin baca
 	messages := api.Group("/messages", authMw, middleware.RoleMiddleware("dosen"))
 	{
-		messages.POST("/send", dosenHandler.SendIssueMessage) // [ANGGOTA 1]
+		messages.POST("/send", dosenHandler.SendIssueMessage) // [ANGGOTA 1] kirim pesan
+		messages.GET("/my", dosenHandler.GetMyMessages)       // [ANGGOTA 1] lihat riwayat pesan sendiri
 	}
 
 	// ─── [ANGGOTA 2] Admin Routes ─────────────────────────────

@@ -3,12 +3,13 @@
 
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ClipboardCheck, QrCode, History, User, LogOut } from 'lucide-react';
+import { ClipboardCheck, QrCode, History, User, LogOut, MessageSquare } from 'lucide-react';
 
 const navItems = [
   { to: '/dosen/absen',   label: 'Absen',   Icon: ClipboardCheck },
   { to: '/dosen/scan',    label: 'Scan QR', Icon: QrCode         },
   { to: '/dosen/riwayat', label: 'Riwayat', Icon: History        },
+  { to: '/dosen/pesan',   label: 'Pesan',   Icon: MessageSquare  },
   { to: '/dosen/profil',  label: 'Profil',  Icon: User           },
 ];
 

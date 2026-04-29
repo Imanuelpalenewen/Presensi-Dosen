@@ -68,6 +68,20 @@ func (s *MessageService) GetAdminMessages(status string) ([]models.Message, erro
 }
 
 // ─────────────────────────────────────────────────────────────
+// [ANGGOTA 1] GetDosenMessages
+// ─────────────────────────────────────────────────────────────
+// Ambil semua pesan yang pernah dikirim oleh dosen tertentu.
+func (s *MessageService) GetDosenMessages(dosenID uint) ([]models.Message, error) {
+	messages := make([]models.Message, 0) // make agar JSON encode [] bukan null
+	err := s.db.
+		Preload("Session.Schedule").
+		Where("dosen_id = ?", dosenID).
+		Order("created_at DESC").
+		Find(&messages).Error
+	return messages, err
+}
+
+// ─────────────────────────────────────────────────────────────
 // [ANGGOTA 2] MarkAsRead
 // ─────────────────────────────────────────────────────────────
 // Tandai pesan sebagai sudah dibaca oleh admin.
