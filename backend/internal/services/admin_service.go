@@ -98,8 +98,51 @@ func (s *AdminService) GetTodaySchedules() (interface{}, error) {
 	return result, nil
 }
 
+// checkScheduleOverlap checks if a new schedule overlaps with existing ones, enforcing a 10-minute gap.
+func (s *AdminService) checkScheduleOverlap(dosenID uint, hari string, jamMulai, jamSelesai string, excludeScheduleID uint) error {
+	newStart, err := time.Parse("15:04", jamMulai)
+	if err != nil {
+		return errors.New("format jam mulai tidak valid")
+	}
+	newEnd, err := time.Parse("15:04", jamSelesai)
+	if err != nil {
+		return errors.New("format jam selesai tidak valid")
+	}
+
+	if newStart.After(newEnd) || newStart.Equal(newEnd) {
+		return errors.New("jam mulai harus lebih awal dari jam selesai")
+	}
+
+	newStartMargin := newStart.Add(-10 * time.Minute)
+	newEndMargin := newEnd.Add(10 * time.Minute)
+
+	var existingSchedules []models.Schedule
+	query := s.db.Where("dosen_id = ? AND hari = ?", dosenID, hari)
+	if excludeScheduleID > 0 {
+		query = query.Where("id != ?", excludeScheduleID)
+	}
+
+	if err := query.Find(&existingSchedules).Error; err != nil {
+		return err
+	}
+
+	for _, ext := range existingSchedules {
+		extStart, _ := time.Parse("15:04", ext.JamMulai)
+		extEnd, _ := time.Parse("15:04", ext.JamSelesai)
+
+		if newStartMargin.Before(extEnd) && newEndMargin.After(extStart) {
+			return fmt.Errorf("jadwal bentrok dengan mata kuliah %s (%s - %s) karena aturan jeda 10 menit", ext.MataKuliah, ext.JamMulai, ext.JamSelesai)
+		}
+	}
+
+	return nil
+}
+
 // CreateSchedule: tambah jadwal baru
 func (s *AdminService) CreateSchedule(req ScheduleRequest) (*models.Schedule, error) {
+	if err := s.checkScheduleOverlap(req.DosenID, req.Hari, req.JamMulai, req.JamSelesai, 0); err != nil {
+		return nil, err
+	}
 	schedule := models.Schedule{
 		DosenID:     req.DosenID,
 		MataKuliah:  req.MataKuliah,
@@ -127,6 +170,10 @@ func (s *AdminService) UpdateSchedule(id uint, req ScheduleRequest) (*models.Sch
 	var schedule models.Schedule
 	if err := s.db.First(&schedule, id).Error; err != nil {
 		return nil, errors.New("jadwal tidak ditemukan")
+	}
+
+	if err := s.checkScheduleOverlap(req.DosenID, req.Hari, req.JamMulai, req.JamSelesai, id); err != nil {
+		return nil, err
 	}
 
 	// TODO: Update semua field dari request
@@ -190,7 +237,6 @@ type SessionActivationResult struct {
 	ID            uint      `json:"id"`
 	QrToken       string    `json:"qr_token"`
 	ExpiredAt     time.Time `json:"expired_at"`
-	ShareableLink string    `json:"shareable_link"` // link yang bisa dibagikan ke dosen
 }
 
 // ActivateSession: buat sesi baru untuk jadwal tertentu
@@ -231,8 +277,6 @@ func (s *AdminService) ActivateSession(scheduleID uint) (*SessionActivationResul
 		ID:        session.ID,
 		QrToken:   qrToken,
 		ExpiredAt: expiredAt,
-		// TODO: Ganti base URL sesuai deployment
-		ShareableLink: fmt.Sprintf("http://localhost:3000/dosen/absen?token=%s", qrToken),
 	}, nil
 }
 
@@ -259,21 +303,102 @@ type RecapItem struct {
 
 // GetAttendanceRecap: rekap semua dosen, filter per bulan
 func (s *AdminService) GetAttendanceRecap(bulan string) ([]RecapItem, error) {
-	// TODO: Query kompleks JOIN users + schedules + sessions + attendances
-	// Group by dosen_id
-	// Hitung total_hadir = COUNT attendances per dosen
-	// Hitung total_pertemuan = COUNT sessions milik dosen tersebut
-	// persentase = (total_hadir / total_pertemuan) * 100
 	var results []RecapItem
-	// TODO: Implementasi query
+	
+	var dosens []struct{
+		ID uint
+		Nama string
+	}
+	if err := s.db.Table("users").Select("id, nama").Where("role = ?", "dosen").Find(&dosens).Error; err != nil {
+		return nil, err
+	}
+	
+	for _, dosen := range dosens {
+		var totalPertemuan int64
+		var totalHadir int64
+		
+		sessionQuery := s.db.Table("sessions").
+			Joins("JOIN schedules ON schedules.id = sessions.schedule_id").
+			Where("schedules.dosen_id = ?", dosen.ID)
+			
+		if bulan != "" {
+			sessionQuery = sessionQuery.Where("sessions.created_at LIKE ?", bulan+"%")
+		}
+		sessionQuery.Count(&totalPertemuan)
+		
+		attendQuery := s.db.Table("attendances").
+			Where("dosen_id = ?", dosen.ID)
+			
+		if bulan != "" {
+			attendQuery = attendQuery.Where("created_at LIKE ?", bulan+"%")
+		}
+		attendQuery.Count(&totalHadir)
+		
+		var persentase float64
+		if totalPertemuan > 0 {
+			persentase = (float64(totalHadir) / float64(totalPertemuan)) * 100
+		}
+		
+		results = append(results, RecapItem{
+			DosenID:        dosen.ID,
+			Nama:           dosen.Nama,
+			TotalHadir:     int(totalHadir),
+			TotalPertemuan: int(totalPertemuan),
+			Persentase:     persentase,
+		})
+	}
+
 	return results, nil
 }
 
 // GetDosenAttendanceDetail: detail absensi per dosen per bulan
 func (s *AdminService) GetDosenAttendanceDetail(dosenID uint, bulan string) (interface{}, error) {
-	// TODO: Query semua sesi milik dosen ini pada bulan tersebut
-	// Untuk setiap sesi, tandai apakah ada attendance record (hadir) atau tidak (tidak hadir)
-	return nil, nil
+	var sessions []models.Session
+	
+	query := s.db.Preload("Schedule").
+		Joins("JOIN schedules ON schedules.id = sessions.schedule_id").
+		Where("schedules.dosen_id = ?", dosenID)
+		
+	if bulan != "" {
+		query = query.Where("sessions.created_at LIKE ?", bulan+"%")
+	}
+	
+	query.Order("sessions.created_at DESC")
+	
+	if err := query.Find(&sessions).Error; err != nil {
+		return nil, err
+	}
+	
+	type DetailItem struct {
+		models.Session
+		MataKuliah     string `json:"mata_kuliah"`
+		Tanggal        string `json:"tanggal"`
+		StatusKehadiran string `json:"status_kehadiran"`
+		JamAbsen       string `json:"jam_absen"`
+	}
+	
+	var details []DetailItem
+	for _, sess := range sessions {
+		var att models.Attendance
+		err := s.db.Where("session_id = ? AND dosen_id = ?", sess.ID, dosenID).First(&att).Error
+		
+		status := "Tidak Hadir"
+		jamAbsen := "-"
+		if err == nil {
+			status = "Hadir"
+			jamAbsen = att.JamAbsen.Format("15:04:05")
+		}
+		
+		details = append(details, DetailItem{
+			Session:         sess,
+			MataKuliah:      sess.Schedule.MataKuliah,
+			Tanggal:         sess.CreatedAt.Format("2006-01-02"),
+			StatusKehadiran: status,
+			JamAbsen:        jamAbsen,
+		})
+	}
+	
+	return details, nil
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@
 package services
 
 import (
+	"math"
 	"time"
 
 	"gorm.io/gorm"
@@ -57,7 +58,8 @@ func (s *WarekService) GetDashboardStats() (*DashboardStats, error) {
 			Joins("JOIN sessions ON sessions.id = attendances.session_id").
 			Where("DATE_FORMAT(sessions.created_at, '%Y-%m') = ?", bulanIni).
 			Count(&totalHadir)
-		stats.RataKehadiranPersen = float64(totalHadir) / float64(stats.TotalPertemuanBulanIni) * 100
+		percentage := float64(totalHadir) / float64(stats.TotalPertemuanBulanIni) * 100
+		stats.RataKehadiranPersen = math.Round(percentage*100) / 100
 	}
 
 	return stats, nil
@@ -80,26 +82,108 @@ type WarekRecapItem struct {
 
 // filters: { dari_tanggal, sampai_tanggal, prodi } — semua opsional
 func (s *WarekService) GetFullRecap(filters map[string]string) ([]WarekRecapItem, error) {
-	// TODO: Query JOIN users + schedules + sessions + attendances
-	// Group by users.id (dosen_id)
-	// Hitung total_hadir = COUNT(attendances.id) per dosen dalam rentang tanggal
-	// Hitung total_pertemuan = COUNT(sessions.id) per dosen dalam rentang tanggal
-	// Filter berdasarkan dari_tanggal & sampai_tanggal jika ada
-
-	// Contoh kerangka query raw (sesuaikan dengan SQL dialect):
-	// SELECT u.id as dosen_id, u.nama,
-	//   COUNT(DISTINCT s.id) as total_pertemuan,
-	//   COUNT(DISTINCT a.id) as total_hadir,
-	//   ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 1) as persentase
-	// FROM users u
-	// LEFT JOIN schedules sc ON sc.dosen_id = u.id
-	// LEFT JOIN sessions s ON s.schedule_id = sc.id
-	// LEFT JOIN attendances a ON a.session_id = s.id AND a.dosen_id = u.id
-	// WHERE u.role = 'dosen'
-	// [AND s.created_at BETWEEN ? AND ?]
-	// GROUP BY u.id
-
-	// TODO: Implementasi query di bawah ini
 	var results []WarekRecapItem
+
+	// Base query: JOIN users → schedules → sessions, LEFT JOIN attendances
+	baseQuery := `
+		SELECT 
+			u.id as dosen_id, 
+			u.nama,
+			u.prodi,
+			COUNT(DISTINCT s.id) as total_pertemuan,
+			COUNT(DISTINCT a.id) as total_hadir,
+			CASE 
+				WHEN COUNT(DISTINCT s.id) > 0 
+				THEN ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 2) 
+				ELSE 0 
+			END as persentase
+		FROM users u
+		LEFT JOIN schedules sc ON sc.dosen_id = u.id AND sc.deleted_at IS NULL
+		LEFT JOIN sessions s ON s.schedule_id = sc.id AND s.deleted_at IS NULL
+		LEFT JOIN attendances a ON a.session_id = s.id AND a.dosen_id = u.id AND a.deleted_at IS NULL
+		WHERE u.role = 'dosen' AND u.deleted_at IS NULL
+	`
+
+	var args []interface{}
+
+	// Filter: dari_tanggal (YYYY-MM-DD)
+	if dari := filters["dari_tanggal"]; dari != "" {
+		baseQuery += " AND s.created_at >= ?"
+		args = append(args, dari)
+	}
+
+	// Filter: sampai_tanggal (YYYY-MM-DD)
+	if sampai := filters["sampai_tanggal"]; sampai != "" {
+		baseQuery += " AND s.created_at <= ?"
+		args = append(args, sampai+" 23:59:59")
+	}
+
+	// Filter: prodi
+	if prodi := filters["prodi"]; prodi != "" {
+		baseQuery += " AND u.prodi LIKE ?"
+		args = append(args, "%"+prodi+"%")
+	}
+
+	baseQuery += " GROUP BY u.id, u.nama, u.prodi ORDER BY u.nama"
+
+	err := s.db.Raw(baseQuery, args...).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Jika results nil (tidak ada data), return array kosong agar frontend tidak error
+	if results == nil {
+		results = []WarekRecapItem{}
+	}
+
+	return results, nil
+}
+
+type WarekProdiItem struct {
+	Prodi           string  `json:"prodi"`
+	TotalDosen      int     `json:"total_dosen"`
+	RataPersentase  float64 `json:"rata_persentase"`
+}
+
+func (s *WarekService) GetProdiRecap(filters map[string]string) ([]WarekProdiItem, error) {
+	var results []WarekProdiItem
+
+	// Query: Group by prodi (assuming prodi is a field in users)
+	// If prodi doesn't exist yet, we'll return some dummy prodi based on data or empty string
+	query := `
+		SELECT 
+			u.prodi,
+			COUNT(DISTINCT u.id) as total_dosen,
+			AVG(sub.persentase) as rata_persentase
+		FROM users u
+		JOIN (
+			SELECT 
+				u2.id,
+				CASE 
+					WHEN COUNT(DISTINCT s.id) > 0 
+					THEN ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 2) 
+					ELSE 0 
+				END as persentase
+			FROM users u2
+			LEFT JOIN schedules sc ON sc.dosen_id = u2.id AND sc.deleted_at IS NULL
+			LEFT JOIN sessions s ON s.schedule_id = sc.id AND s.deleted_at IS NULL
+			LEFT JOIN attendances a ON a.session_id = s.id AND a.dosen_id = u2.id AND a.deleted_at IS NULL
+			WHERE u2.role = 'dosen' AND u2.deleted_at IS NULL
+			GROUP BY u2.id
+		) sub ON sub.id = u.id
+		WHERE u.role = 'dosen' AND u.prodi IS NOT NULL AND u.prodi != ''
+		GROUP BY u.prodi
+		ORDER BY u.prodi ASC
+	`
+
+	err := s.db.Raw(query).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if results == nil {
+		results = []WarekProdiItem{}
+	}
+
 	return results, nil
 }

@@ -1,6 +1,6 @@
 // ============================================================
 // components/dosen/SessionCard.jsx
-// ✅ [ANGGOTA 1 - KAMU] Kartu tampilan sesi aktif di halaman absensi.
+// ✅ [ANGGOTA 1] Kartu tampilan sesi aktif di halaman absensi.
 //
 // Props:
 //   session: { id, mata_kuliah, kelas, jam_mulai, jam_selesai,

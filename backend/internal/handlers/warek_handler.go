@@ -66,3 +66,19 @@ func (h *WarekHandler) GetFullRecap(c *gin.Context) {
 
 	utils.OK(c, "Rekap kehadiran berhasil diambil.", recap)
 }
+
+// GET /api/warek/attendance/report-prodi
+func (h *WarekHandler) GetProdiRecap(c *gin.Context) {
+	filters := map[string]string{
+		"dari_tanggal":   c.Query("dari_tanggal"),
+		"sampai_tanggal": c.Query("sampai_tanggal"),
+	}
+
+	recap, err := h.warekService.GetProdiRecap(filters)
+	if err != nil {
+		utils.InternalError(c, "Gagal mengambil rekap prodi.")
+		return
+	}
+
+	utils.OK(c, "Rekap prodi berhasil diambil.", recap)
+}

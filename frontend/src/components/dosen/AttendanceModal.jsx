@@ -1,6 +1,6 @@
 // ============================================================
 // components/dosen/AttendanceModal.jsx
-// ✅ [ANGGOTA 1 - KAMU] Modal proses dan hasil absensi.
+// ✅ [ANGGOTA 1] Modal proses dan hasil absensi.
 //
 // Props:
 //   session: data sesi yang sedang diabsen

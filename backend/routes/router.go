@@ -7,12 +7,13 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"sistem-presensi-dosen/config"
 	"sistem-presensi-dosen/internal/handlers"
 	"sistem-presensi-dosen/internal/middleware"
 	"sistem-presensi-dosen/internal/services"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
@@ -32,14 +33,14 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	})
 
 	// ─── Inisialisasi semua service ───────────────────────────
-	authService    := services.NewAuthService(db, cfg)
-	dosenService   := services.NewDosenService(db, cfg)
-	adminService   := services.NewAdminService(db, cfg)
-	warekService   := services.NewWarekService(db)
+	authService := services.NewAuthService(db, cfg)
+	dosenService := services.NewDosenService(db, cfg)
+	adminService := services.NewAdminService(db, cfg)
+	warekService := services.NewWarekService(db)
 	messageService := services.NewMessageService(db)
 
 	// ─── Inisialisasi semua handler ───────────────────────────
-	authHandler  := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(authService)
 	dosenHandler := handlers.NewDosenHandler(dosenService, messageService)
 	adminHandler := handlers.NewAdminHandler(adminService, messageService)
 	warekHandler := handlers.NewWarekHandler(warekService)
@@ -63,18 +64,23 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	{
 		dosen.GET("/sessions/active", dosenHandler.GetActiveSessions)
 		dosen.GET("/attendance/history", dosenHandler.GetAttendanceHistory)
+		dosen.GET("/profile", dosenHandler.GetProfile)
+		dosen.GET("/attendance/stats", dosenHandler.GetAttendanceStats)
+		dosen.PATCH("/profile/password", dosenHandler.ChangePassword) // Ganti password
 	}
 
 	// Attendance submit bisa dari group sendiri karena path-nya berbeda
 	attendance := api.Group("/attendance", authMw, middleware.RoleMiddleware("dosen"))
 	{
 		attendance.POST("/submit", dosenHandler.SubmitAttendance)
+		attendance.POST("/submit-token", dosenHandler.SubmitAttendanceByToken) // QR token submission
 	}
 
-	// Messages: dosen kirim, admin baca (route send ada di group messages)
+	// Messages: dosen kirim & lihat riwayat, admin baca
 	messages := api.Group("/messages", authMw, middleware.RoleMiddleware("dosen"))
 	{
-		messages.POST("/send", dosenHandler.SendIssueMessage) // [ANGGOTA 1]
+		messages.POST("/send", dosenHandler.SendIssueMessage) // [ANGGOTA 1] kirim pesan
+		messages.GET("/my", dosenHandler.GetMyMessages)       // [ANGGOTA 1] lihat riwayat pesan sendiri
 	}
 
 	// ─── [ANGGOTA 2] Admin Routes ─────────────────────────────
@@ -111,6 +117,19 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	{
 		warek.GET("/dashboard", warekHandler.GetDashboardStats)
 		warek.GET("/attendance/recap", warekHandler.GetFullRecap)
+		warek.GET("/attendance/report-prodi", warekHandler.GetProdiRecap)
+	}
+
+	// Alias routes as requested by user
+	dashboard := api.Group("/dashboard", authMw, middleware.RoleMiddleware("warek3"))
+	{
+		dashboard.GET("/stats", warekHandler.GetDashboardStats)
+	}
+
+	report := api.Group("/attendance", authMw, middleware.RoleMiddleware("warek3"))
+	{
+		report.GET("/report", warekHandler.GetFullRecap)
+		report.GET("/report-prodi", warekHandler.GetProdiRecap)
 	}
 
 	return r
