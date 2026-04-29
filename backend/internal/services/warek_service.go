@@ -89,7 +89,7 @@ func (s *WarekService) GetFullRecap(filters map[string]string) ([]WarekRecapItem
 		SELECT 
 			u.id as dosen_id, 
 			u.nama,
-			'' as prodi,
+			u.prodi,
 			COUNT(DISTINCT s.id) as total_pertemuan,
 			COUNT(DISTINCT a.id) as total_hadir,
 			CASE 
@@ -118,7 +118,13 @@ func (s *WarekService) GetFullRecap(filters map[string]string) ([]WarekRecapItem
 		args = append(args, sampai+" 23:59:59")
 	}
 
-	baseQuery += " GROUP BY u.id, u.nama ORDER BY u.nama"
+	// Filter: prodi
+	if prodi := filters["prodi"]; prodi != "" {
+		baseQuery += " AND u.prodi LIKE ?"
+		args = append(args, "%"+prodi+"%")
+	}
+
+	baseQuery += " GROUP BY u.id, u.nama, u.prodi ORDER BY u.nama"
 
 	err := s.db.Raw(baseQuery, args...).Scan(&results).Error
 	if err != nil {
@@ -146,7 +152,7 @@ func (s *WarekService) GetProdiRecap(filters map[string]string) ([]WarekProdiIte
 	// If prodi doesn't exist yet, we'll return some dummy prodi based on data or empty string
 	query := `
 		SELECT 
-			COALESCE(u.prodi, 'Lainnya') as prodi,
+			u.prodi,
 			COUNT(DISTINCT u.id) as total_dosen,
 			AVG(sub.persentase) as rata_persentase
 		FROM users u
@@ -165,8 +171,9 @@ func (s *WarekService) GetProdiRecap(filters map[string]string) ([]WarekProdiIte
 			WHERE u2.role = 'dosen' AND u2.deleted_at IS NULL
 			GROUP BY u2.id
 		) sub ON sub.id = u.id
-		WHERE u.role = 'dosen'
+		WHERE u.role = 'dosen' AND u.prodi IS NOT NULL AND u.prodi != ''
 		GROUP BY u.prodi
+		ORDER BY u.prodi ASC
 	`
 
 	err := s.db.Raw(query).Scan(&results).Error
