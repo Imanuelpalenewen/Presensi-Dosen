@@ -111,6 +111,19 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	{
 		warek.GET("/dashboard", warekHandler.GetDashboardStats)
 		warek.GET("/attendance/recap", warekHandler.GetFullRecap)
+		warek.GET("/attendance/report-prodi", warekHandler.GetProdiRecap)
+	}
+
+	// Alias routes as requested by user
+	dashboard := api.Group("/dashboard", authMw, middleware.RoleMiddleware("warek3"))
+	{
+		dashboard.GET("/stats", warekHandler.GetDashboardStats)
+	}
+
+	report := api.Group("/attendance", authMw, middleware.RoleMiddleware("warek3"))
+	{
+		report.GET("/report", warekHandler.GetFullRecap)
+		report.GET("/report-prodi", warekHandler.GetProdiRecap)
 	}
 
 	return r

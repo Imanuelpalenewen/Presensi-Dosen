@@ -1,121 +1,74 @@
-// ============================================================
-// pages/warek/WarekRecapPage.jsx
-// ✅ [ANGGOTA 3 - WAREK 3]
-//
-// Halaman rekap kehadiran semua dosen. READ-ONLY.
-//
-// Fitur:
-//  1. Filter: rentang tanggal (dari–sampai) dan prodi
-//  2. Tabel semua dosen: nama, prodi, total hadir, total pertemuan, persentase (%)
-//  3. Warnai persentase: hijau ≥75%, kuning 50–74%, merah <50%
-//  4. Tidak ada tombol edit/hapus apapun — hanya lihat
-//  Gunakan: warekService.getFullRecap
-// ============================================================
-
-import { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Navbar from '../../components/common/Navbar'
-import LoadingSpinner from '../../components/common/LoadingSpinner'
-import { getFullRecap } from '../../services/warekService'
+import RekapDosen from '../../components/warek/RekapDosen'
+import RekapProdi from '../../components/warek/RekapProdi'
+import { Link } from 'react-router-dom'
 
 export default function WarekRecapPage() {
-  const [recap, setRecap] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({ dari_tanggal: '', sampai_tanggal: '', prodi: '' })
-
-  useEffect(() => {
-    const fetchRecap = async () => {
-      setLoading(true)
-      try {
-        // TODO: Kirim filter ke API hanya jika ada nilai
-        const params = Object.fromEntries(
-          Object.entries(filters).filter(([, v]) => v !== '')
-        )
-        const data = await getFullRecap(params)
-        setRecap(data)
-      } catch (err) {
-        console.error('Gagal ambil rekap:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchRecap()
-  }, [filters])
-
-  // TODO: Helper untuk warna badge persentase
-  const badgeColor = (persen) => {
-    if (persen >= 75) return 'bg-green-100 text-green-700'
-    if (persen >= 50) return 'bg-yellow-100 text-yellow-700'
-    return 'bg-red-100 text-red-700'
-  }
+  const [activeTab, setActiveTab] = useState('dosen')
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <h2 className="text-xl font-bold mb-4">Rekap Kehadiran Dosen</h2>
-
-        {/* TODO: Filter rentang tanggal dan prodi */}
-        <div className="flex flex-wrap gap-3 mb-4">
-          <input
-            type="date"
-            value={filters.dari_tanggal}
-            onChange={(e) => setFilters({ ...filters, dari_tanggal: e.target.value })}
-            className="border px-3 py-2 rounded-lg text-sm"
-            placeholder="Dari tanggal"
-          />
-          <input
-            type="date"
-            value={filters.sampai_tanggal}
-            onChange={(e) => setFilters({ ...filters, sampai_tanggal: e.target.value })}
-            className="border px-3 py-2 rounded-lg text-sm"
-            placeholder="Sampai tanggal"
-          />
-          {/* TODO: Input filter prodi (text atau dropdown dari API) */}
-          <input
-            type="text"
-            value={filters.prodi}
-            onChange={(e) => setFilters({ ...filters, prodi: e.target.value })}
-            className="border px-3 py-2 rounded-lg text-sm"
-            placeholder="Prodi (opsional)"
-          />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <Link to="/warek/dashboard" className="text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center mb-4 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Kembali ke Dashboard
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Rekapitulasi Kehadiran</h1>
+          <p className="text-gray-500 text-sm mt-1">Laporan lengkap kehadiran dosen dan performa program studi.</p>
         </div>
 
-        {loading ? (
-          <LoadingSpinner message="Memuat rekap..." />
-        ) : recap.length === 0 ? (
-          <p className="text-center text-gray-400 py-10">Tidak ada data.</p>
-        ) : (
-          // TODO: Tabel rekap dosen READ-ONLY
-          <table className="w-full bg-white rounded-xl shadow text-sm">
-            <thead className="bg-blue-700 text-white">
-              <tr>
-                <th className="p-3 text-left">No</th>
-                <th className="p-3 text-left">Nama Dosen</th>
-                <th className="p-3 text-left">Prodi</th>
-                <th className="p-3 text-left">Hadir</th>
-                <th className="p-3 text-left">Total Pertemuan</th>
-                <th className="p-3 text-left">Persentase</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recap.map((row, idx) => (
-                <tr key={row.dosen_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">{idx + 1}</td>
-                  <td className="p-3 font-medium">{row.nama}</td>
-                  <td className="p-3 text-gray-500">{row.prodi}</td>
-                  <td className="p-3">{row.total_hadir}</td>
-                  <td className="p-3">{row.total_pertemuan}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${badgeColor(row.persentase)}`}>
-                      {row.persentase}%
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 bg-gray-200 p-1 rounded-2xl w-full max-w-md mb-8">
+          <button
+            onClick={() => setActiveTab('dosen')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${
+              activeTab === 'dosen' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Rekap Per Dosen
+          </button>
+          <button
+            onClick={() => setActiveTab('prodi')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${
+              activeTab === 'prodi' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Rekap Per Prodi
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="transition-opacity duration-300">
+          {activeTab === 'dosen' ? (
+            <RekapDosen />
+          ) : (
+            <RekapProdi />
+          )}
+        </div>
+
+        {/* Export Action */}
+        <div className="mt-8 flex justify-end">
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v7" />
+            </svg>
+            Cetak Laporan (PDF)
+          </button>
+        </div>
+      </main>
     </div>
   )
 }
