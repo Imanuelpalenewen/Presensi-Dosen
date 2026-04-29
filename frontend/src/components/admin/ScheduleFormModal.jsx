@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin } from 'lucide-react';
+import { X, MapPin, Map } from 'lucide-react';
 import { createSchedule, updateSchedule, getDosenList } from '../../services/adminService';
+import MapPickerModal from '../common/MapPickerModal';
 
 export default function ScheduleFormModal({ schedule, onClose }) {
   const [dosenList, setDosenList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showMapPicker, setShowMapPicker] = useState(false);
   
   const [formData, setFormData] = useState({
     dosen_id: '',
@@ -211,10 +213,38 @@ export default function ScheduleFormModal({ schedule, onClose }) {
             </div>
 
             <div className="col-span-1 md:col-span-2 pt-4 border-t border-gray-100">
-              <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-4">
-                <MapPin size={16} className="text-red-500" />
-                Konfigurasi Lokasi Absensi (GPS)
-              </h4>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <MapPin size={16} className="text-red-500" />
+                  Konfigurasi Lokasi Absensi (GPS)
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowMapPicker(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+                >
+                  <Map size={14} />
+                  Pilih di Peta
+                </button>
+              </div>
+
+              {/* Map preview strip when coords are set */}
+              {formData.lokasi_lat && formData.lokasi_lng && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-green-800 text-sm">
+                    <MapPin size={14} className="text-green-600" />
+                    <span className="font-medium">Lokasi dipilih:</span>
+                    <span className="font-mono text-xs">{Number(formData.lokasi_lat).toFixed(6)}, {Number(formData.lokasi_lng).toFixed(6)}</span>
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${formData.lokasi_lat},${formData.lokasi_lng}`}
+                    target="_blank" rel="noreferrer"
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Verifikasi ↗
+                  </a>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="col-span-1 md:col-span-2">
@@ -232,30 +262,36 @@ export default function ScheduleFormModal({ schedule, onClose }) {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                  <input 
-                    type="number"
-                    step="any"
-                    name="lokasi_lat"
-                    value={formData.lokasi_lat}
-                    onChange={handleChange}
-                    required
-                    placeholder="-7.250445"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
+                  <div className="relative">
+                    <input 
+                      type="number"
+                      step="any"
+                      name="lokasi_lat"
+                      value={formData.lokasi_lat}
+                      onChange={handleChange}
+                      required
+                      placeholder="Klik tombol Pilih di Peta atau masukkan manual"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all pr-10"
+                    />
+                    <MapPin size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                  </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                  <input 
-                    type="number"
-                    step="any"
-                    name="lokasi_lng"
-                    value={formData.lokasi_lng}
-                    onChange={handleChange}
-                    required
-                    placeholder="112.768845"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
+                  <div className="relative">
+                    <input 
+                      type="number"
+                      step="any"
+                      name="lokasi_lng"
+                      value={formData.lokasi_lng}
+                      onChange={handleChange}
+                      required
+                      placeholder="Klik tombol Pilih di Peta atau masukkan manual"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all pr-10"
+                    />
+                    <MapPin size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                  </div>
                 </div>
 
                 <div className="col-span-1 md:col-span-2">
@@ -298,6 +334,19 @@ export default function ScheduleFormModal({ schedule, onClose }) {
           </div>
         </form>
       </div>
+
+      {/* Map Picker Modal */}
+      {showMapPicker && (
+        <MapPickerModal
+          initialLat={formData.lokasi_lat || 0}
+          initialLng={formData.lokasi_lng || 0}
+          radius={Number(formData.radius_meter) || 100}
+          onConfirm={(lat, lng) => {
+            setFormData(prev => ({ ...prev, lokasi_lat: lat, lokasi_lng: lng }))
+          }}
+          onClose={() => setShowMapPicker(false)}
+        />
+      )}
     </div>
   );
 }

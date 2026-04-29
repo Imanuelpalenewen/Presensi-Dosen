@@ -13,13 +13,15 @@
 import React, { useState, useEffect } from 'react'
 import LoadingSpinner from '../../components/common/LoadingSpinner'
 import { getAllSchedules, updateScheduleLocation } from '../../services/adminService'
-import { MapPin, Navigation, Edit, Save, X, ExternalLink, Info, Search, CheckCircle, AlertCircle } from 'lucide-react'
+import { MapPin, Navigation, Edit, Save, X, ExternalLink, Info, Search, CheckCircle, AlertCircle, Map } from 'lucide-react'
+import MapPickerModal from '../../components/common/MapPickerModal'
 
 export default function LocationConfigPage() {
   const [schedules, setSchedules] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
+  const [showMapPicker, setShowMapPicker] = useState(false)
   
   const [editForm, setEditForm] = useState({
     lokasi_nama: '',
@@ -125,18 +127,19 @@ export default function LocationConfigPage() {
           </div>
         </div>
 
-        {/* Panduan Penggunaan Google Maps */}
+        {/* Tips Penggunaan Map Picker */}
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 flex gap-4">
           <Info className="text-blue-500 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-semibold text-blue-900 mb-1">Panduan Mengambil Titik Koordinat</h3>
-            <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1">
-              <li>Buka <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="font-bold underline">Google Maps</a> di browser Anda.</li>
-              <li>Cari lokasi kelas/gedung tempat perkuliahan berlangsung.</li>
-              <li>Klik kanan pada titik lokasi yang tepat, Anda akan melihat angka koordinat (misal: <code>-7.2504, 112.7688</code>).</li>
-              <li>Klik angka tersebut untuk menyalin ke clipboard.</li>
-              <li>Paste koordinat tersebut ke form Latitude (angka pertama) dan Longitude (angka kedua).</li>
+            <h3 className="font-semibold text-blue-900 mb-2">Cara Mudah Set Lokasi GPS</h3>
+            <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1.5">
+              <li>Klik tombol <span className="font-bold bg-blue-100 px-1.5 py-0.5 rounded">✦ Pilih di Peta</span> di samping jadwal yang ingin dikonfigurasi.</li>
+              <li>Gunakan <span className="font-semibold">kotak pencarian</span> di peta untuk cari nama gedung atau lokasi.</li>
+              <li>Klik titik di peta yang tepat — atau geser marker ke posisi yang diinginkan.</li>
+              <li>Gunakan tombol <span className="font-semibold">📍 Lokasi Saya</span> untuk deteksi GPS otomatis dari perangkat Anda.</li>
+              <li>Klik <span className="font-bold">Gunakan Lokasi Ini</span> untuk menyimpan koordinat ke form.</li>
             </ol>
+            <p className="text-xs text-blue-600 mt-2">Anda juga bisa input Latitude/Longitude secara manual jika diperlukan.</p>
           </div>
         </div>
 
@@ -224,6 +227,35 @@ export default function LocationConfigPage() {
                   {/* Edit Form Section */}
                   {isEditing && (
                     <div className="bg-gray-50 border-t border-gray-100 p-5">
+                      {/* Map Picker Button */}
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit Koordinat</span>
+                        <button
+                          onClick={() => setShowMapPicker(true)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+                        >
+                          <Map size={14} />
+                          Pilih di Peta
+                        </button>
+                      </div>
+
+                      {/* Coordinate confirmation strip */}
+                      {editForm.lokasi_lat && editForm.lokasi_lng && (
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-green-800 text-sm">
+                            <MapPin size={14} className="text-green-600" />
+                            <span className="font-mono text-xs">{Number(editForm.lokasi_lat).toFixed(6)}, {Number(editForm.lokasi_lng).toFixed(6)}</span>
+                          </div>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${editForm.lokasi_lat},${editForm.lokasi_lng}`}
+                            target="_blank" rel="noreferrer"
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Verifikasi ↗
+                          </a>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="col-span-1 md:col-span-2 lg:col-span-1">
                           <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Nama Lokasi</label>
@@ -288,6 +320,19 @@ export default function LocationConfigPage() {
           </div>
         )}
       </div>
+
+      {/* Map Picker Modal for Location Edit */}
+      {showMapPicker && (
+        <MapPickerModal
+          initialLat={editForm.lokasi_lat || 0}
+          initialLng={editForm.lokasi_lng || 0}
+          radius={Number(editForm.radius_meter) || 100}
+          onConfirm={(lat, lng) => {
+            setEditForm(prev => ({ ...prev, lokasi_lat: lat, lokasi_lng: lng }))
+          }}
+          onClose={() => setShowMapPicker(false)}
+        />
+      )}
     </div>
   )
 }
