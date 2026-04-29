@@ -189,3 +189,32 @@ func (h *DosenHandler) SendIssueMessage(c *gin.Context) {
 
 	utils.Created(c, "Pesan kendala berhasil dikirim ke admin.", msg)
 }
+
+// PATCH /api/dosen/profile/password
+// Ganti password dosen yang sedang login.
+// Body: { "current_password": "...", "new_password": "..." }
+func (h *DosenHandler) ChangePassword(c *gin.Context) {
+	dosenID := c.GetUint("userID")
+
+	var req struct {
+		CurrentPassword string `json:"current_password" binding:"required"`
+		NewPassword     string `json:"new_password" binding:"required,min=6"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequest(c, "current_password dan new_password (min 6 karakter) wajib diisi.")
+		return
+	}
+
+	err := h.dosenService.ChangePassword(dosenID, req.CurrentPassword, req.NewPassword)
+	if err != nil {
+		if err.Error() == "password lama tidak sesuai" {
+			c.JSON(400, gin.H{"message": "Password saat ini tidak sesuai."})
+			return
+		}
+		utils.InternalError(c, "Gagal mengubah password.")
+		return
+	}
+
+	utils.OK(c, "Password berhasil diubah.", nil)
+}

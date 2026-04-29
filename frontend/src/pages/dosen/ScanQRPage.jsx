@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import dosenService from '../../services/dosenService';
@@ -18,6 +18,7 @@ export default function ScanQRPage() {
 
   const scannerInstanceRef = useRef(null);
   const qrReaderRef = useRef(null);
+  const processingRef = useRef(false);
 
   const mapErrorMessage = (errCode, errMessage) => {
     const errorMap = {
@@ -31,96 +32,87 @@ export default function ScanQRPage() {
     return errorMap[errCode] || errMessage || 'Terjadi kesalahan. Coba lagi nanti.';
   };
 
-  // Initialize & cleanup scanner with proper camera facing
-  useEffect(() => {
-    if (mode !== 'scanner') {
-      // Cleanup scanner when switching to manual mode
-      const cleanup = async () => {
-        if (scannerInstanceRef.current) {
-          try {
-            await scannerInstanceRef.current.stop();
-          } catch (e) {}
-          scannerInstanceRef.current = null;
-        }
-      };
-      cleanup();
-      setScannerReady(false);
-      return;
-    }
-
-    const startScanner = async () => {
-      if (!qrReaderRef.current) return;
-
-      try {
-        const scanner = new Html5Qrcode('qr-reader');
-        scannerInstanceRef.current = scanner;
-
-        // Increase QR box size for better scanning area and don't over-zoom
-        await scanner.start(
-          { facingMode: cameraFacing },
-          {
-            fps: 10,
-            qrbox: { width: 350, height: 350 }, // Increased from 250x250
-            aspectRatio: 1.0,
-            showTorchButtonIfSupported: false, // Remove flash feature
-          },
-          (decodedText) => handleQRSuccess(decodedText),
-          () => {} // suppress error logs
-        );
-
-        setScannerReady(true);
-        setCameraError(null);
-      } catch (err) {
-        let errorMsg = 'Gagal membuka kamera. Pastikan izin kamera sudah diaktifkan.';
-
-        if (err.name === 'NotAllowedError') {
-          errorMsg = '📷 Izin akses kamera ditolak. Aktifkan izin kamera di pengaturan perangkat Anda.';
-        } else if (err.name === 'NotFoundError') {
-          errorMsg = '📷 Tidak ada perangkat kamera ditemukan pada perangkat ini.';
-        } else if (err.name === 'NotSupportedError') {
-          errorMsg = '📷 Browser Anda tidak mendukung akses kamera.';
-        }
-
-        setCameraError(errorMsg);
-        setScannerReady(false);
-      }
-    };
-
-    startScanner();
-
-    return () => {
-      const cleanup = async () => {
-        if (scannerInstanceRef.current) {
-          try {
-            await scannerInstanceRef.current.stop();
-          } catch (e) {}
-          scannerInstanceRef.current = null;
-        }
-      };
-      cleanup();
-    };
-  }, [mode, cameraFacing]);
-
-  const handleQRSuccess = async (decodedText) => {
-    if (submitting) return;
+  const stopScanner = useCallback(async () => {
     if (scannerInstanceRef.current) {
       try {
-        await scannerInstanceRef.current.stop();
-      } catch (e) {}
-    }
-    submitQRToken(decodedText);
-  };
-
-  const toggleCamera = async () => {
-    // Stop current scanner
-    if (scannerInstanceRef.current) {
-      try {
-        await scannerInstanceRef.current.stop();
+        const state = scannerInstanceRef.current.getState();
+        if (state === 2) { // SCANNING
+          await scannerInstanceRef.current.stop();
+        }
       } catch (e) {}
       scannerInstanceRef.current = null;
     }
     setScannerReady(false);
-    // Switch camera facing
+  }, []);
+
+  const startScanner = useCallback(async () => {
+    if (!qrReaderRef.current) return;
+
+    try {
+      // Cleanup div
+      const container = document.getElementById('qr-reader');
+      if (container) container.innerHTML = '';
+
+      const scanner = new Html5Qrcode('qr-reader');
+      scannerInstanceRef.current = scanner;
+
+      const containerWidth = qrReaderRef.current?.offsetWidth || 400;
+      const qrBoxSize = Math.min(Math.floor(containerWidth * 0.75), 320);
+
+      await scanner.start(
+        { facingMode: cameraFacing },
+        {
+          fps: 10,
+          qrbox: { width: qrBoxSize, height: qrBoxSize },
+          aspectRatio: 1.0,
+          showTorchButtonIfSupported: false,
+          disableFlip: false, // let html5qrcode handle orientation
+        },
+        (decodedText) => handleQRSuccess(decodedText),
+        () => {} // suppress scan errors
+      );
+
+      setScannerReady(true);
+      setCameraError(null);
+    } catch (err) {
+      let errorMsg = 'Gagal membuka kamera. Pastikan izin kamera sudah diaktifkan.';
+
+      if (err.name === 'NotAllowedError' || (err.message && err.message.includes('Permission'))) {
+        errorMsg = '📷 Izin akses kamera ditolak. Aktifkan izin kamera di pengaturan perangkat Anda.';
+      } else if (err.name === 'NotFoundError') {
+        errorMsg = '📷 Tidak ada perangkat kamera ditemukan pada perangkat ini.';
+      } else if (err.name === 'NotSupportedError') {
+        errorMsg = '📷 Browser Anda tidak mendukung akses kamera.';
+      }
+
+      setCameraError(errorMsg);
+      setScannerReady(false);
+    }
+  }, [cameraFacing]);
+
+  useEffect(() => {
+    if (mode !== 'scanner') {
+      stopScanner();
+      return;
+    }
+
+    startScanner();
+
+    return () => {
+      stopScanner();
+    };
+  }, [mode, cameraFacing]);
+
+  const handleQRSuccess = async (decodedText) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    await stopScanner();
+    await submitQRToken(decodedText);
+    processingRef.current = false;
+  };
+
+  const toggleCamera = async () => {
+    await stopScanner();
     setCameraFacing((prev) => (prev === 'environment' ? 'user' : 'environment'));
   };
 
@@ -128,7 +120,7 @@ export default function ScanQRPage() {
     if (!token || !token.trim()) {
       setResult({
         success: false,
-        message: '⚠️ Token QR tidak boleh kosong.',
+        message: 'Token QR tidak boleh kosong.',
       });
       return;
     }
@@ -145,22 +137,9 @@ export default function ScanQRPage() {
           message: '📍 Gagal mendapatkan lokasi GPS. Pastikan GPS/lokasi sudah diaktifkan.',
         });
         setSubmitting(false);
-
-        // Restart scanner
-        if (mode === 'scanner' && scannerInstanceRef.current) {
-          try {
-            await scannerInstanceRef.current.start(
-              { facingMode: cameraFacing },
-              {
-                fps: 10,
-                qrbox: { width: 350, height: 350 },
-                showTorchButtonIfSupported: false,
-              },
-              (decodedText) => handleQRSuccess(decodedText),
-              () => {}
-            );
-            setScannerReady(true);
-          } catch (e) {}
+        // Restart scanner after error
+        if (mode === 'scanner') {
+          setTimeout(() => startScanner(), 500);
         }
         return;
       }
@@ -173,35 +152,23 @@ export default function ScanQRPage() {
 
       setResult({
         success: true,
-        message: '✅ Absensi berhasil dicatat! Selamat mengajar! 🎉',
+        message: 'Absensi berhasil dicatat! Selamat mengajar!',
       });
 
       setTimeout(() => navigate('/dosen/riwayat'), 2500);
     } catch (err) {
       const backendErr = err.response?.data;
       const errorCode = backendErr?.kode_error;
-      const errorMessage = backendErr?.pesan;
+      const errorMessage = backendErr?.pesan || backendErr?.message;
 
       setResult({
         success: false,
         message: mapErrorMessage(errorCode, errorMessage),
       });
 
-      // Restart scanner
-      if (mode === 'scanner' && scannerInstanceRef.current) {
-        try {
-          await scannerInstanceRef.current.start(
-            { facingMode: cameraFacing },
-            {
-              fps: 10,
-              qrbox: { width: 350, height: 350 },
-              showTorchButtonIfSupported: false,
-            },
-            (decodedText) => handleQRSuccess(decodedText),
-            () => {}
-          );
-          setScannerReady(true);
-        } catch (e) {}
+      // Restart scanner after error
+      if (mode === 'scanner') {
+        setTimeout(() => startScanner(), 1000);
       }
     } finally {
       setSubmitting(false);
@@ -213,123 +180,199 @@ export default function ScanQRPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a' }}>
+      {/* Header */}
+      <div
+        style={{
+          padding: '16px 20px 12px',
+          background: 'linear-gradient(180deg, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0) 100%)',
+          position: 'relative',
+          zIndex: 20,
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>
+          Scan QR Absensi
+        </h2>
+        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+          Arahkan kamera ke QR Code yang ditampilkan admin
+        </p>
+      </div>
+
       {/* Scanner Area */}
       <div
-        ref={qrReaderRef}
         style={{
           flex: '0 0 auto',
           background: '#0f172a',
           position: 'relative',
           overflow: 'hidden',
-          aspectRatio: '1 / 1',
-          maxHeight: '60vw',
+          width: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '100%',
         }}
       >
-        {cameraError ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: 24,
-              color: '#f87171',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 12,
-              width: '100%',
-            }}
-          >
-            <div style={{ fontSize: 40 }}>📷</div>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, maxWidth: 280 }}>
-              {cameraError}
-            </p>
-            <button
-              onClick={() => {
-                setCameraError(null);
-                setScannerReady(false);
-                setMode('scanner');
-              }}
+        {/* Camera viewport - aspect ratio square */}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 480,
+            aspectRatio: '1 / 1',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {cameraError ? (
+            <div
               style={{
-                marginTop: 8,
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                color: '#fff',
-                borderRadius: 8,
-                padding: '8px 16px',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 16,
+                padding: 24,
+                background: '#0f172a',
               }}
             >
-              Coba Lagi
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* QR Reader Container */}
-            <div
-              id="qr-reader"
-              style={{
-                width: '100%',
-                height: '100%',
-                position: 'relative',
-              }}
-            />
-
-            {/* Camera Switch Button */}
-            {mode === 'scanner' && scannerReady && (
+              <div style={{ fontSize: 52 }}>📷</div>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#f87171', textAlign: 'center', maxWidth: 280 }}>
+                {cameraError}
+              </p>
               <button
-                onClick={toggleCamera}
-                disabled={submitting}
+                onClick={() => {
+                  setCameraError(null);
+                  setScannerReady(false);
+                  setMode('scanner');
+                  setTimeout(() => startScanner(), 200);
+                }}
                 style={{
-                  position: 'absolute',
-                  top: 16,
-                  right: 16,
-                  zIndex: 12,
-                  background: 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: 10,
-                  padding: '10px 14px',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.25)',
                   color: '#fff',
+                  borderRadius: 10,
+                  padding: '10px 20px',
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  transition: 'all 0.2s',
-                  opacity: submitting ? 0.5 : 1,
+                  cursor: 'pointer',
                 }}
               >
-                {cameraFacing === 'environment' ? '📷' : '🤳'} Ubah Kamera
+                Coba Lagi
               </button>
-            )}
+            </div>
+          ) : (
+            <>
+              {/* QR Reader Container */}
+              <div
+                ref={qrReaderRef}
+                id="qr-reader"
+                className={cameraFacing === 'user' ? 'camera-front' : ''}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
+                }}
+              />
 
-            {/* Scanner Status */}
-            {mode === 'scanner' && (
+              {/* Overlay frame - scanner corners */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  zIndex: 11,
+                }}
+              >
+                {/* Corner decorations */}
+                {['tl', 'tr', 'bl', 'br'].map((corner) => (
+                  <div
+                    key={corner}
+                    style={{
+                      position: 'absolute',
+                      width: 36,
+                      height: 36,
+                      borderColor: '#22c55e',
+                      borderStyle: 'solid',
+                      borderWidth: 0,
+                      ...(corner === 'tl'
+                        ? { top: '12.5%', left: '12.5%', borderTopWidth: 4, borderLeftWidth: 4, borderRadius: '6px 0 0 0' }
+                        : corner === 'tr'
+                        ? { top: '12.5%', right: '12.5%', borderTopWidth: 4, borderRightWidth: 4, borderRadius: '0 6px 0 0' }
+                        : corner === 'bl'
+                        ? { bottom: '12.5%', left: '12.5%', borderBottomWidth: 4, borderLeftWidth: 4, borderRadius: '0 0 0 6px' }
+                        : { bottom: '12.5%', right: '12.5%', borderBottomWidth: 4, borderRightWidth: 4, borderRadius: '0 0 6px 0' }),
+                    }}
+                  />
+                ))}
+
+                {/* Scan line animation */}
+                {scannerReady && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '12.5%',
+                      right: '12.5%',
+                      height: 2,
+                      background: 'linear-gradient(90deg, transparent, #22c55e, transparent)',
+                      animation: 'scanline 2.4s ease-in-out infinite',
+                      top: '50%',
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Camera switch button - top right */}
+              {mode === 'scanner' && (
+                <button
+                  onClick={toggleCamera}
+                  disabled={submitting}
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    zIndex: 20,
+                    background: 'rgba(15,23,42,0.65)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    borderRadius: 12,
+                    padding: '8px 12px',
+                    color: '#fff',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s',
+                    opacity: submitting ? 0.5 : 1,
+                  }}
+                >
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {cameraFacing === 'environment' ? 'Depan' : 'Belakang'}
+                </button>
+              )}
+
+              {/* Scanner status badge - bottom */}
               <div
                 style={{
                   position: 'absolute',
                   bottom: 16,
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: scannerReady ? 'rgba(34, 197, 94, 0.9)' : 'rgba(100, 116, 139, 0.9)',
+                  background: scannerReady ? 'rgba(34,197,94,0.85)' : 'rgba(100,116,139,0.85)',
                   backdropFilter: 'blur(6px)',
                   color: '#fff',
                   fontSize: 12,
-                  padding: '8px 14px',
+                  padding: '6px 14px',
                   borderRadius: 20,
                   whiteSpace: 'nowrap',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  zIndex: 10,
+                  zIndex: 20,
                 }}
               >
                 {scannerReady ? (
@@ -347,101 +390,37 @@ export default function ScanQRPage() {
                   </>
                 ) : (
                   <>
-                    <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
                     Inisialisasi...
                   </>
                 )}
               </div>
-            )}
-
-            {/* Corner Frame */}
-            {['tl', 'tr', 'bl', 'br'].map((corner) => (
-              <div
-                key={corner}
-                style={{
-                  position: 'absolute',
-                  width: 40,
-                  height: 40,
-                  borderColor: '#22c55e',
-                  borderStyle: 'solid',
-                  borderWidth: 0,
-                  zIndex: 11,
-                  ...(corner === 'tl'
-                    ? {
-                        top: 50,
-                        left: 50,
-                        borderTopWidth: 4,
-                        borderLeftWidth: 4,
-                        borderRadius: '8px 0 0 0',
-                      }
-                    : corner === 'tr'
-                    ? {
-                        top: 50,
-                        right: 50,
-                        borderTopWidth: 4,
-                        borderRightWidth: 4,
-                        borderRadius: '0 8px 0 0',
-                      }
-                    : corner === 'bl'
-                    ? {
-                        bottom: 50,
-                        left: 50,
-                        borderBottomWidth: 4,
-                        borderLeftWidth: 4,
-                        borderRadius: '0 0 0 8px',
-                      }
-                    : {
-                        bottom: 50,
-                        right: 50,
-                        borderBottomWidth: 4,
-                        borderRightWidth: 4,
-                        borderRadius: '0 0 8px 0',
-                      }),
-                }}
-              />
-            ))}
-
-            {/* Scan Line */}
-            {mode === 'scanner' && scannerReady && (
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: 280,
-                  height: 2,
-                  background: 'linear-gradient(90deg, transparent, #22c55e, transparent)',
-                  animation: 'scanline 2.4s ease-in-out infinite',
-                  zIndex: 11,
-                }}
-              />
-            )}
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Controls & Info */}
-      <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
-        {/* Result Toast */}
+      <div style={{ flex: 1, background: '#fff', borderRadius: '24px 24px 0 0', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 14, marginTop: -24, position: 'relative', zIndex: 10 }}>
+        {/* Result */}
         {result && (
           <div
             style={{
               background: result.success ? '#f0fdf4' : '#fef2f2',
               border: `1.5px solid ${result.success ? '#86efac' : '#fca5a5'}`,
-              borderRadius: 14,
-              padding: '14px 16px',
+              borderRadius: 16,
+              padding: '16px 18px',
               textAlign: 'center',
               animation: 'slideDown 0.3s ease-out',
             }}
           >
-            <div style={{ fontSize: 26, marginBottom: 4 }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>
               {result.success ? '✅' : '❌'}
             </div>
             <p
               style={{
                 margin: 0,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 600,
                 color: result.success ? '#15803d' : '#dc2626',
                 lineHeight: 1.5,
@@ -452,7 +431,7 @@ export default function ScanQRPage() {
           </div>
         )}
 
-        {/* Mode Toggle / Input Area */}
+        {/* Mode controls */}
         {mode === 'scanner' ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -462,11 +441,12 @@ export default function ScanQRPage() {
             </div>
 
             <button
-              onClick={() => setMode('manual')}
+              onClick={() => { setResult(null); setMode('manual'); }}
               disabled={submitting}
               style={{
-                background: 'none',
-                border: 'none',
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: 14,
                 cursor: submitting ? 'not-allowed' : 'pointer',
                 fontSize: 14,
                 fontWeight: 600,
@@ -474,12 +454,12 @@ export default function ScanQRPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
-                padding: '8px 0',
-                transition: 'color 0.2s',
+                gap: 8,
+                padding: '13px 16px',
+                transition: 'all 0.2s',
               }}
             >
-              ⌨️ Masukkan Kode Manual
+              Masukkan Kode Manual
             </button>
           </>
         ) : (
@@ -506,6 +486,7 @@ export default function ScanQRPage() {
                 }}
                 placeholder="Masukkan token dari admin…"
                 disabled={submitting}
+                autoFocus
                 style={{
                   width: '100%',
                   padding: '13px 14px',
@@ -518,7 +499,6 @@ export default function ScanQRPage() {
                   boxSizing: 'border-box',
                   letterSpacing: '0.05em',
                   backgroundColor: submitting ? '#f9fafb' : '#fff',
-                  transition: 'all 0.2s',
                 }}
               />
             </div>
@@ -543,10 +523,9 @@ export default function ScanQRPage() {
                   !submitting && manualToken.trim()
                     ? '0 6px 20px rgba(30,45,120,0.3)'
                     : 'none',
-                transition: 'all 0.2s',
               }}
             >
-              {submitting ? '⏳ Memproses…' : '✅ Konfirmasi Absensi'}
+              {submitting ? 'Memproses…' : 'Konfirmasi Absensi'}
             </button>
 
             <button
@@ -564,7 +543,7 @@ export default function ScanQRPage() {
                 color: submitting ? '#cbd5e1' : '#64748b',
                 fontWeight: 600,
                 padding: '8px 0',
-                transition: 'color 0.2s',
+                textAlign: 'center',
               }}
             >
               ← Kembali ke Scanner
@@ -580,44 +559,63 @@ export default function ScanQRPage() {
             borderRadius: 12,
             padding: '12px 14px',
             display: 'flex',
-            gap: 8,
+            gap: 10,
+            alignItems: 'flex-start',
           }}
         >
-          <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
+          <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>💡</span>
           <p style={{ margin: 0, fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
-            Posisikan QR Code di tengah bingkai untuk scan optimal. Pastikan lokasi GPS Anda aktif untuk verifikasi kehadiran.
+            Posisikan QR Code di tengah bingkai hijau. Pastikan pencahayaan cukup dan lokasi GPS aktif untuk verifikasi kehadiran.
           </p>
         </div>
       </div>
 
       {/* Styles */}
       <style>{`
+        /* Hide html5-qrcode default UI elements */
         #qr-reader {
-          width: 100%;
-          height: 100%;
+          border: none !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+
+        #qr-reader__header_message,
+        #qr-reader__status_span,
+        #qr-reader__camera_permission_button,
+        #qr-reader__dashboard_section_csr,
+        #qr-reader__dashboard_section_swaplink,
+        #qr-reader select,
+        #qr-reader__filescan_input,
+        #qr-reader__torch_button,
+        #qr-reader__dashboard_section {
+          display: none !important;
         }
 
         #qr-reader video {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transform: scaleX(1);
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          transform: scaleX(1) !important;
+        }
+
+        #qr-reader.camera-front video {
+          transform: scaleX(-1) !important;
         }
 
         #qr-reader canvas {
-          display: none;
+          display: none !important;
         }
 
         @keyframes scanline {
-          0%   { top: -50px;   opacity: 0; }
+          0%   { transform: translateY(-150px); opacity: 0; }
           10%  { opacity: 1; }
           90%  { opacity: 1; }
-          100% { top: calc(100% + 50px); opacity: 0; }
+          100% { transform: translateY(150px); opacity: 0; }
         }
 
         @keyframes pulse {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
+          50% { opacity: 0.4; }
         }
 
         @keyframes spin {
@@ -626,14 +624,8 @@ export default function ScanQRPage() {
         }
 
         @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

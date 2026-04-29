@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dosenService from '../../services/dosenService';
 import { useAuth } from '../../hooks/useAuth';
+import { User, Mail, BookOpen, GraduationCap, Lock, LogOut, AlertTriangle } from 'lucide-react';
 
 function InfoRow({ icon, label, value }) {
   return (
@@ -36,6 +37,66 @@ function InfoRow({ icon, label, value }) {
         <p style={{ margin: 0, fontSize: 14, color: '#1e293b', fontWeight: 600, wordBreak: 'break-word' }}>
           {value || '-'}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// Komponen khusus untuk Mata Kuliah — menampilkan setiap course sebagai badge
+function CoursesRow({ icon, courses }) {
+  const list = Array.isArray(courses) && courses.length > 0 ? courses : null;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 14,
+        padding: '14px 0',
+        borderBottom: '1px solid #f1f5f9',
+      }}
+    >
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          background: '#eff6ff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: '0 0 8px', fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          Mata Kuliah
+        </p>
+        {list ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {list.map((course, i) => (
+              <span
+                key={i}
+                style={{
+                  display: 'inline-block',
+                  background: '#eff6ff',
+                  color: '#1E2D78',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: 8,
+                  border: '1px solid #bfdbfe',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {course}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: 14, color: '#1e293b', fontWeight: 600 }}>-</p>
+        )}
       </div>
     </div>
   );
@@ -150,7 +211,7 @@ function PasswordModal({ onClose }) {
           }}
         />
         <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
-          🔒 Ganti Password
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Lock size={18} /> Ganti Password</span>
         </h3>
 
         {['current', 'next', 'confirm'].map((field) => (
@@ -242,14 +303,19 @@ export default function ProfilPage() {
     loadProfile();
   }, []);
 
-  const initials = (profile?.name || user?.name || 'D')
+  // Backend mengirim { name, email, department, courses, total_sessions, attended, attendance_rate }
+  // AuthContext menyimpan { nama, email, role, prodi }
+  const displayName  = profile?.name       || user?.nama  || user?.name || 'Dosen';
+  const displayEmail = profile?.email      || user?.email || '-';
+  const displayDept  = profile?.department || user?.prodi || '-';
+  const displayCourses = profile?.courses  || [];
+
+  const initials = displayName
     .split(' ')
     .slice(0, 2)
     .map((n) => n[0])
     .join('')
     .toUpperCase();
-
-  const data = profile || user;
 
   return (
     <div>
@@ -257,52 +323,59 @@ export default function ProfilPage() {
       <div
         style={{
           background: 'linear-gradient(135deg, #1E2D78 0%, #162060 100%)',
-          padding: '32px 20px 48px',
+          padding: '32px 20px 52px',
           textAlign: 'center',
         }}
       >
+        {/* Avatar */}
         <div
           style={{
-            width: 76,
-            height: 76,
+            width: 80,
+            height: 80,
             borderRadius: '50%',
-            background: '#10B981',
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: 800,
             margin: '0 auto 14px',
             border: '3px solid rgba(255,255,255,0.25)',
+            boxShadow: '0 8px 24px rgba(16,185,129,0.3)',
           }}
         >
           {initials}
         </div>
         <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: '#fff' }}>
-          {data?.name || 'Dosen'}
+          {displayName}
         </h2>
+        <p style={{ margin: '0 0 4px', fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+          {displayEmail}
+        </p>
         <span
           style={{
-            background: '#10B981',
-            color: '#fff',
+            background: 'rgba(16,185,129,0.2)',
+            color: '#86efac',
             fontSize: 11,
             fontWeight: 700,
             padding: '3px 12px',
             borderRadius: 20,
             letterSpacing: '0.06em',
+            display: 'inline-block',
+            marginTop: 6,
           }}
         >
-          Dosen
+          DOSEN
         </span>
 
         {/* Quick stats */}
         {profile && (
           <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
             {[
-              { v: profile.total_sessions || 0, l: 'semester ini' },
-              { v: profile.attended || 0, l: 'kehadiran' },
-              { v: `${profile.attendance_rate || 0}%`, l: 'rata-rata' },
+              { v: profile.total_sessions ?? 0, l: 'Total Sesi' },
+              { v: profile.attended ?? 0, l: 'Hadir' },
+              { v: `${profile.attendance_rate ?? 0}%`, l: 'Kehadiran' },
             ].map((s) => (
               <div
                 key={s.l}
@@ -310,7 +383,9 @@ export default function ProfilPage() {
                   background: 'rgba(255,255,255,0.12)',
                   borderRadius: 12,
                   padding: '10px 16px',
-                  minWidth: 70,
+                  minWidth: 72,
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                 }}
               >
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>{s.v}</div>
@@ -322,7 +397,7 @@ export default function ProfilPage() {
       </div>
 
       {/* Card */}
-      <div style={{ padding: '0 16px', marginTop: -18 }}>
+      <div style={{ padding: '0 16px', marginTop: -22 }}>
         {loading ? (
           <div
             style={{
@@ -344,8 +419,8 @@ export default function ProfilPage() {
               textAlign: 'center',
             }}
           >
-            <p style={{ margin: 0, fontSize: 13, color: '#dc2626', fontWeight: 600 }}>
-              ⚠️ {error}
+            <p style={{ margin: 0, fontSize: 13, color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertTriangle size={14} /> {error}
             </p>
             <button
               onClick={() => window.location.reload()}
@@ -382,10 +457,10 @@ export default function ProfilPage() {
                   Informasi Akun
                 </p>
               </div>
-              <InfoRow icon="👤" label="Nama Lengkap" value={data?.name} />
-              <InfoRow icon="✉️" label="Email" value={data?.email} />
-              <InfoRow icon="📚" label="Program Studi" value={data?.department} />
-              <InfoRow icon="📖" label="Mata Kuliah" value={data?.courses?.join(', ')} />
+              <InfoRow icon={<User size={17} color="#3b82f6" />} label="Nama Lengkap" value={displayName} />
+              <InfoRow icon={<Mail size={17} color="#3b82f6" />} label="Email" value={displayEmail} />
+              <InfoRow icon={<GraduationCap size={17} color="#3b82f6" />} label="Program Studi" value={displayDept} />
+              <CoursesRow icon={<BookOpen size={17} color="#3b82f6" />} courses={displayCourses} />
             </div>
 
             {/* Settings card */}
@@ -404,11 +479,23 @@ export default function ProfilPage() {
                   Pengaturan
                 </p>
               </div>
-              <SettingRow icon="🔒" label="Keamanan" sublabel="Ganti password" onClick={() => setShowPassModal(true)} />
+              <SettingRow icon={<Lock size={17} color="#475569" />} label="Keamanan" sublabel="Ganti password" onClick={() => setShowPassModal(true)} />
+              <SettingRow
+                icon={<LogOut size={17} color="#dc2626" />}
+                label="Keluar"
+                sublabel="Logout dari akun ini"
+                danger
+                onClick={() => {
+                  if (window.confirm('Yakin ingin keluar?')) {
+                    logout();
+                    navigate('/login');
+                  }
+                }}
+              />
             </div>
 
             <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', margin: '8px 0 0' }}>
-              SiPresQR • Universitas • v2.0
+              SiPresQR • v2.0
             </p>
           </>
         )}
@@ -420,7 +507,6 @@ export default function ProfilPage() {
       <style>{`
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
         @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-        @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
       `}</style>
     </div>
   );

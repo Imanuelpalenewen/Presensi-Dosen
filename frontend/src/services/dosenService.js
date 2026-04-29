@@ -27,10 +27,11 @@ const dosenService = {
   // ── Riwayat ───────────────────────────────────────────────────────────────
   /**
    * Ambil riwayat absensi dosen.
-   * GET /dosen/attendance/history?filter=all|month|semester
+   * GET /dosen/attendance/history?bulan=YYYY-MM
+   * bulan: opsional, kosong = semua
    */
-  getAttendanceHistory: (filter = 'all') =>
-    api.get('/dosen/attendance/history', { params: { filter } }),
+  getAttendanceHistory: (bulan = '') =>
+    api.get('/dosen/attendance/history', bulan ? { params: { bulan } } : {}),
 
   /**
    * Ambil ringkasan statistik absensi.
@@ -55,10 +56,10 @@ const dosenService = {
   // ── Pesan / Laporan ───────────────────────────────────────────────────
   /**
    * Kirim laporan kendala absensi ke admin.
-   * POST /dosen/messages
-   * Body: { subject, body, session_id? }
+   * POST /messages/send
+   * Body: { judul, isi, session_id? }
    */
-  sendMessage: (data) => api.post('/dosen/messages', data),
+  sendMessage: (data) => api.post('/messages/send', data),
 };
 
 export default dosenService;

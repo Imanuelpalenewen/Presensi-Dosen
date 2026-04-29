@@ -66,6 +66,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		dosen.GET("/attendance/history", dosenHandler.GetAttendanceHistory)
 		dosen.GET("/profile", dosenHandler.GetProfile)
 		dosen.GET("/attendance/stats", dosenHandler.GetAttendanceStats)
+		dosen.PATCH("/profile/password", dosenHandler.ChangePassword) // Ganti password
 	}
 
 	// Attendance submit bisa dari group sendiri karena path-nya berbeda
