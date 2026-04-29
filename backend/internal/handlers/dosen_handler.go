@@ -132,6 +132,36 @@ func (h *DosenHandler) GetAttendanceHistory(c *gin.Context) {
 	utils.OK(c, "Riwayat absensi berhasil diambil.", history)
 }
 
+// GET /api/dosen/profile
+// Ambil profil lengkap dosen dengan statistik kehadiran semester ini.
+// Response mencakup: nama, email, prodi, daftar mata kuliah, dan stat absensi.
+func (h *DosenHandler) GetProfile(c *gin.Context) {
+	dosenID := c.GetUint("userID")
+
+	profile, err := h.dosenService.GetProfile(dosenID)
+	if err != nil {
+		utils.NotFound(c, "Profil dosen tidak ditemukan.")
+		return
+	}
+
+	utils.OK(c, "Profil dosen berhasil diambil.", profile)
+}
+
+// GET /api/dosen/attendance/stats
+// Ambil ringkasan statistik kehadiran dosen untuk semester ini.
+// Response: total sesi, jumlah hadir, persentase kehadiran.
+func (h *DosenHandler) GetAttendanceStats(c *gin.Context) {
+	dosenID := c.GetUint("userID")
+
+	stats, err := h.dosenService.GetAttendanceStats(dosenID)
+	if err != nil {
+		utils.InternalError(c, "Gagal mengambil statistik kehadiran.")
+		return
+	}
+
+	utils.OK(c, "Statistik kehadiran berhasil diambil.", stats)
+}
+
 // POST /api/messages/send
 // Dosen mengirim pesan kendala ke admin jika tidak bisa absen.
 // Body: { "judul": "...", "isi": "...", "session_id": 1 } (session_id opsional)
@@ -158,4 +188,33 @@ func (h *DosenHandler) SendIssueMessage(c *gin.Context) {
 	}
 
 	utils.Created(c, "Pesan kendala berhasil dikirim ke admin.", msg)
+}
+
+// PATCH /api/dosen/profile/password
+// Ganti password dosen yang sedang login.
+// Body: { "current_password": "...", "new_password": "..." }
+func (h *DosenHandler) ChangePassword(c *gin.Context) {
+	dosenID := c.GetUint("userID")
+
+	var req struct {
+		CurrentPassword string `json:"current_password" binding:"required"`
+		NewPassword     string `json:"new_password" binding:"required,min=6"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequest(c, "current_password dan new_password (min 6 karakter) wajib diisi.")
+		return
+	}
+
+	err := h.dosenService.ChangePassword(dosenID, req.CurrentPassword, req.NewPassword)
+	if err != nil {
+		if err.Error() == "password lama tidak sesuai" {
+			c.JSON(400, gin.H{"message": "Password saat ini tidak sesuai."})
+			return
+		}
+		utils.InternalError(c, "Gagal mengubah password.")
+		return
+	}
+
+	utils.OK(c, "Password berhasil diubah.", nil)
 }

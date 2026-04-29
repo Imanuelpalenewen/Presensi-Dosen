@@ -28,8 +28,8 @@ export default function ReportIssuePage() {
     setSubmitting(true);
     try {
       await dosenService.sendMessage({
-        subject: subject.trim(),
-        body: `[${issueType}] ${body.trim()}`,
+        judul: subject.trim(),
+        isi: `[${issueType}] ${body.trim()}`,
       });
       setSent(true);
     } catch (err) {
