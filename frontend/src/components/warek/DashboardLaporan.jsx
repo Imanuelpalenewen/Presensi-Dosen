@@ -84,7 +84,7 @@ const DashboardLaporan = () => {
 
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl shadow-lg text-white">
           <p className="text-emerald-100 text-sm font-medium uppercase tracking-wider">Rata-rata Kehadiran</p>
-          <h3 className="text-4xl font-bold mt-2">{stats?.rataHadir}%</h3>
+          <h3 className="text-4xl font-bold mt-2">{stats?.rataHadir?.toFixed(2)}%</h3>
           <div className="mt-4 flex items-center text-emerald-100 text-xs">
             <span className="bg-emerald-400 bg-opacity-30 px-2 py-1 rounded-full">Bulan Ini</span>
           </div>

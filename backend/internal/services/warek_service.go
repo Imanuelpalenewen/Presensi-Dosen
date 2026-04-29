@@ -9,6 +9,7 @@
 package services
 
 import (
+	"math"
 	"time"
 
 	"gorm.io/gorm"
@@ -57,7 +58,8 @@ func (s *WarekService) GetDashboardStats() (*DashboardStats, error) {
 			Joins("JOIN sessions ON sessions.id = attendances.session_id").
 			Where("DATE_FORMAT(sessions.created_at, '%Y-%m') = ?", bulanIni).
 			Count(&totalHadir)
-		stats.RataKehadiranPersen = float64(totalHadir) / float64(stats.TotalPertemuanBulanIni) * 100
+		percentage := float64(totalHadir) / float64(stats.TotalPertemuanBulanIni) * 100
+		stats.RataKehadiranPersen = math.Round(percentage*100) / 100
 	}
 
 	return stats, nil
@@ -92,7 +94,7 @@ func (s *WarekService) GetFullRecap(filters map[string]string) ([]WarekRecapItem
 			COUNT(DISTINCT a.id) as total_hadir,
 			CASE 
 				WHEN COUNT(DISTINCT s.id) > 0 
-				THEN ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 1) 
+				THEN ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 2) 
 				ELSE 0 
 			END as persentase
 		FROM users u
@@ -153,7 +155,7 @@ func (s *WarekService) GetProdiRecap(filters map[string]string) ([]WarekProdiIte
 				u2.id,
 				CASE 
 					WHEN COUNT(DISTINCT s.id) > 0 
-					THEN ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 1) 
+					THEN ROUND(COUNT(DISTINCT a.id) / COUNT(DISTINCT s.id) * 100, 2) 
 					ELSE 0 
 				END as persentase
 			FROM users u2

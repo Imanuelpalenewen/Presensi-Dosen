@@ -143,7 +143,7 @@ const RekapDosen = () => {
                         ></div>
                       </div>
                       <span className={`text-sm font-bold ${item.persentase >= 80 ? 'text-emerald-600' : item.persentase >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
-                        {item.persentase}%
+                        {item.persentase?.toFixed(2)}%
                       </span>
                     </div>
                   </td>

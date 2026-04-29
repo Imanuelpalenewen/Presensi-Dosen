@@ -56,7 +56,7 @@ const RekapProdi = () => {
                 <div className="mt-6">
                   <div className="flex justify-between items-end mb-2">
                     <span className="text-sm font-medium text-gray-600">Rata-rata Kehadiran</span>
-                    <span className="text-lg font-bold text-blue-600">{Math.round(item.rata_persentase)}%</span>
+                    <span className="text-lg font-bold text-blue-600">{item.rata_persentase?.toFixed(2)}%</span>
                   </div>
                   <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
                     <div 
