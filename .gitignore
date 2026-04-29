@@ -3,22 +3,32 @@ node_modules/
 
 # Environment Variables — JANGAN pernah di-commit!
 .env
+.env.*
+!.env.example
 backend/.env
 frontend/.env
 
 # Build Output
 dist/
 build/
+out/
 
 # Go
 backend/tmp/
 *.exe
 *.test
+*.out
 
 # OS Files
 .DS_Store
 Thumbs.db
+*.log
 
 # IDE
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

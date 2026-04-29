@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- ─── Tabel schedules (Jadwal Semester) ────────────────────────
+-- ─── Tabel schedules (Jadwal Semester) ────────────────────────   
 -- Dibuat sekali di awal semester. Koordinat kelas disimpan di sini.
 CREATE TABLE IF NOT EXISTS schedules (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

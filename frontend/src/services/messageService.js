@@ -1,6 +1,6 @@
 // ============================================================
 // services/messageService.js
-// ✅ [ANGGOTA 1 - KAMU] Kirim pesan kendala ke admin.
+// ✅ [ANGGOTA 1] Kirim pesan kendala ke admin.
 // ✅ [ANGGOTA 2]         Ambil dan tandai pesan dari dosen.
 // ============================================================
 

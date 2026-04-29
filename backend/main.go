@@ -26,9 +26,11 @@ func main() {
 	// Koneksi ke database dan auto-migrate schema
 	db := database.Connect(cfg)
 	database.AutoMigrate(db)
-	
+
 	// Seed dummy users (Admin, Dosen, Warek3)
 	database.SeedUsers(db)
+	database.SeedSchedules(db)
+	database.SeedAttendance(db)
 
 	// Setup router dan jalankan server
 	r := routes.SetupRouter(db, cfg)

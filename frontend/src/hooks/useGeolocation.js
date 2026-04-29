@@ -1,63 +1,89 @@
-// ============================================================
 // hooks/useGeolocation.js
-// ✅ [ANGGOTA 1 - KAMU] Custom hook untuk ambil koordinat GPS browser.
-// Digunakan di TakeAttendancePage dan AttendanceModal.
-// ============================================================
+import { useState, useCallback, useRef } from 'react';
 
-import { useState, useCallback } from 'react'
+export const useGeolocation = () => {
+  const [location, setLocation] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const watchIdRef = useRef(null);
 
-export function useGeolocation() {
-  const [coords, setCoords] = useState(null)       // { latitude, longitude, accuracy }
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  // Fungsi untuk request koordinat GPS dari browser
-  // TODO: Panggil getCurrentPosition dari Browser Geolocation API
-  // - enableHighAccuracy: true → paksa pakai GPS, bukan WiFi/Cell tower
-  // - timeout: 10000 → batas waktu 10 detik
-  // - maximumAge: 0 → selalu ambil lokasi terbaru, jangan cache
   const getLocation = useCallback(() => {
-    setLoading(true)
-    setError(null)
-    setCoords(null)
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        const msg = 'Geolocation tidak didukung oleh browser ini.';
+        setError(msg);
+        reject(new Error(msg));
+        return;
+      }
 
-    if (!navigator.geolocation) {
-      setError('Browser kamu tidak mendukung Geolocation. Coba gunakan Chrome atau Firefox terbaru.')
-      setLoading(false)
-      return
-    }
+      setLoading(true);
+      setError(null);
 
-    navigator.geolocation.getCurrentPosition(
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          };
+          setLocation(coords);
+          setLoading(false);
+          resolve(coords);
+        },
+        (err) => {
+          let message = 'Gagal mendapatkan lokasi.';
+          switch (err.code) {
+            case err.PERMISSION_DENIED:
+              message =
+                'Izin akses lokasi ditolak. Harap aktifkan akses lokasi di pengaturan browser Anda.';
+              break;
+            case err.POSITION_UNAVAILABLE:
+              message =
+                'Informasi lokasi tidak tersedia. Pastikan GPS aktif.';
+              break;
+            case err.TIMEOUT:
+              message =
+                'Waktu pengambilan lokasi habis. Coba lagi di area dengan sinyal GPS lebih baik.';
+              break;
+            default:
+              message = `Error lokasi: ${err.message}`;
+          }
+          setError(message);
+          setLoading(false);
+          reject(new Error(message));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+    });
+  }, []);
+
+  const watchLocation = useCallback((onUpdate) => {
+    if (!navigator.geolocation) return;
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        // TODO: Simpan koordinat dari position.coords
-        setCoords({
+        const coords = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy, // dalam meter — untuk info user
-        })
-        setLoading(false)
+          accuracy: position.coords.accuracy,
+        };
+        setLocation(coords);
+        if (onUpdate) onUpdate(coords);
       },
-      (err) => {
-        // TODO: Tangani berbagai kasus error geolocation:
-        // err.code === 1 → User menolak izin lokasi
-        // err.code === 2 → Sinyal GPS tidak tersedia
-        // err.code === 3 → Timeout — GPS terlalu lama
-        let pesan = ''
-        if (err.code === 1) {
-          pesan = 'Izin lokasi ditolak. Aktifkan GPS di pengaturan browser, lalu coba lagi.'
-        } else if (err.code === 2) {
-          pesan = 'Sinyal GPS tidak tersedia. Pindah ke area dengan sinyal lebih baik.'
-        } else if (err.code === 3) {
-          pesan = 'GPS timeout. Pastikan GPS aktif dan coba lagi.'
-        } else {
-          pesan = 'Gagal mengambil lokasi. Coba lagi.'
-        }
-        setError(pesan)
-        setLoading(false)
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    )
-  }, [])
+      null,
+      { enableHighAccuracy: true, maximumAge: 5000 }
+    );
+  }, []);
 
-  return { coords, loading, error, getLocation }
-}
+  const clearWatch = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  }, []);
+
+  return { location, error, loading, getLocation, watchLocation, clearWatch };
+};

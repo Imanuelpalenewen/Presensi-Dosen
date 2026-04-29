@@ -1,9 +1,7 @@
 // ============================================================
 // internal/services/message_service.go
-// ✅ [ANGGOTA 1 - KAMU] SendFromDosen — kirim pesan kendala
-// ✅ [ANGGOTA 2 - ADMIN] GetAdminMessages, MarkAsRead — terima & baca pesan
-//
-// Service ini menjembatani komunikasi satu arah: Dosen → Admin.
+// ✅ [ANGGOTA 1] SendFromDosen — dosen kirim pesan kendala
+// ✅ [ANGGOTA 2] GetAdminMessages, MarkAsRead — admin baca pesan
 // ============================================================
 
 package services
@@ -22,44 +20,44 @@ func NewMessageService(db *gorm.DB) *MessageService {
 }
 
 // ─────────────────────────────────────────────────────────────
-// [ANGGOTA 1 - KAMU] SendFromDosen
+// [ANGGOTA 1] SendFromDosen
 // ─────────────────────────────────────────────────────────────
 // Dosen mengirim laporan kendala ke admin.
-// Dipanggil dari dosen_handler.go → POST /api/messages/send
-//
-// sessionID adalah pointer (*uint) karena bisa null (kendala tidak terkait sesi tertentu)
+// sessionID adalah *uint (pointer) karena bisa null — dosen bisa
+// melapor kendala umum yang tidak terkait sesi tertentu.
 func (s *MessageService) SendFromDosen(dosenID uint, judul, isi string, sessionID *uint) (*models.Message, error) {
-	// TODO: Buat record Message baru dan simpan ke DB
 	msg := models.Message{
 		DosenID:   dosenID,
 		SessionID: sessionID, // null jika tidak ada sesi terkait
 		Judul:     judul,
 		Isi:       isi,
-		Status:    "unread", // semua pesan baru selalu 'unread'
+		Status:    "unread", // semua pesan baru selalu masuk sebagai 'unread'
 	}
 
 	if err := s.db.Create(&msg).Error; err != nil {
 		return nil, err
 	}
 
-	// TODO: Preload data Dosen agar response menyertakan nama dosen
-	s.db.Preload("Dosen").First(&msg, msg.ID)
+	// Preload Dosen agar response menyertakan nama dosen (bukan hanya ID)
+	if err := s.db.Preload("Dosen").First(&msg, msg.ID).Error; err != nil {
+		return nil, err
+	}
 
 	return &msg, nil
 }
 
 // ─────────────────────────────────────────────────────────────
-// [ANGGOTA 2 - ADMIN] GetAdminMessages
+// [ANGGOTA 2] GetAdminMessages
 // ─────────────────────────────────────────────────────────────
 // Ambil semua pesan dari dosen dengan filter status opsional.
-// Dipanggil dari admin_handler.go → GET /api/admin/messages
-//
-// status: "" = semua, "unread", atau "read"
+// status: "" = semua | "unread" | "read"
 func (s *MessageService) GetAdminMessages(status string) ([]models.Message, error) {
 	var messages []models.Message
 
-	// TODO: Query dengan Preload Dosen agar bisa tampilkan nama dosen di inbox
-	query := s.db.Preload("Dosen").Preload("Session.Schedule").Order("created_at DESC")
+	query := s.db.
+		Preload("Dosen").
+		Preload("Session.Schedule").
+		Order("created_at DESC")
 
 	if status == "unread" || status == "read" {
 		query = query.Where("status = ?", status)
@@ -70,14 +68,12 @@ func (s *MessageService) GetAdminMessages(status string) ([]models.Message, erro
 }
 
 // ─────────────────────────────────────────────────────────────
-// [ANGGOTA 2 - ADMIN] MarkAsRead
+// [ANGGOTA 2] MarkAsRead
 // ─────────────────────────────────────────────────────────────
-// Tandai pesan sebagai sudah dibaca.
-// Dipanggil dari admin_handler.go → PATCH /api/admin/messages/:id/read
+// Tandai pesan sebagai sudah dibaca oleh admin.
 func (s *MessageService) MarkAsRead(messageID uint) (*models.Message, error) {
 	var msg models.Message
 
-	// TODO: Cek pesan ada dulu, lalu update status ke 'read'
 	if err := s.db.First(&msg, messageID).Error; err != nil {
 		return nil, err
 	}
