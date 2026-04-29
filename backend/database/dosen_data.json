@@ -244,6 +244,18 @@
       "end_time": "10:00",
       "room": "GA - Computer Lab",
       "building": "GA"
+    },
+    {
+      "name": "Enrico Djimesha, S.Kom., M.MT",
+      "email": "EnricoDjimesha@dosen.unklab.ac.id",
+      "course_code": "IFMI352",
+      "course_name": "Backend Development",
+      "credits": 3,
+      "day": "Rabu",
+      "start_time": "16:00",
+      "end_time": "17:50",
+      "room": "GA - Computer Lab",
+      "building": "GA"
     }
   ]
 }

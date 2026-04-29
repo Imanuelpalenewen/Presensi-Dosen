@@ -90,10 +90,9 @@ func (h *AdminHandler) CreateSchedule(c *gin.Context) {
 		return
 	}
 
-	// TODO: Panggil adminService.CreateSchedule(req)
 	schedule, err := h.adminService.CreateSchedule(req)
 	if err != nil {
-		utils.InternalError(c, "Gagal menyimpan jadwal baru.")
+		utils.BadRequest(c, err.Error())
 		return
 	}
 
@@ -115,10 +114,9 @@ func (h *AdminHandler) UpdateSchedule(c *gin.Context) {
 		return
 	}
 
-	// TODO: Panggil adminService.UpdateSchedule(uint(id), req)
 	schedule, err := h.adminService.UpdateSchedule(uint(id), req)
 	if err != nil {
-		utils.InternalError(c, "Gagal memperbarui jadwal.")
+		utils.BadRequest(c, err.Error())
 		return
 	}
 
