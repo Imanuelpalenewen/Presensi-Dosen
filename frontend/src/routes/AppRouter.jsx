@@ -12,6 +12,7 @@ import ScanQRPage from '../pages/dosen/ScanQRPage';
 import AttendanceHistoryPage from '../pages/dosen/AttendanceHistoryPage';
 import ProfilePage from '../pages/dosen/ProfilePage';
 import ReportIssuePage from '../pages/dosen/ReportIssuePage';
+import SendMessagePage from '../pages/dosen/SendMessagePage';
 
 // Admin
 import TodaySchedulePage from '../pages/admin/TodaySchedulePage';
@@ -47,6 +48,7 @@ export default function AppRouter() {
           <Route path="riwayat" element={<AttendanceHistoryPage />} />
           <Route path="profil" element={<ProfilePage />} />
           <Route path="laporan" element={<ReportIssuePage />} />
+          <Route path="pesan" element={<SendMessagePage />} />
         </Route>
 
         {/* Admin */}

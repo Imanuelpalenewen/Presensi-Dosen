@@ -162,6 +162,21 @@ func (h *DosenHandler) GetAttendanceStats(c *gin.Context) {
 	utils.OK(c, "Statistik kehadiran berhasil diambil.", stats)
 }
 
+// GET /api/messages/my
+// Dosen melihat riwayat semua pesan yang sudah mereka kirim.
+// Response: array of messages milik dosen yang sedang login.
+func (h *DosenHandler) GetMyMessages(c *gin.Context) {
+	dosenID := c.GetUint("userID")
+
+	messages, err := h.messageService.GetDosenMessages(dosenID)
+	if err != nil {
+		utils.InternalError(c, "Gagal mengambil riwayat pesan.")
+		return
+	}
+
+	utils.OK(c, "Riwayat pesan berhasil diambil.", messages)
+}
+
 // POST /api/messages/send
 // Dosen mengirim pesan kendala ke admin jika tidak bisa absen.
 // Body: { "judul": "...", "isi": "...", "session_id": 1 } (session_id opsional)

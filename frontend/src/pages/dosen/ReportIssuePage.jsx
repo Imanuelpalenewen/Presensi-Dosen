@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dosenService from '../../services/dosenService';
+import { AlertCircle, Clock, XCircle, RefreshCw, MessageCircle, ArrowLeft, Send } from 'lucide-react';
 
 const ISSUE_TYPES = [
-  { value: 'gps_not_accurate', label: '📍 GPS Tidak Akurat', desc: 'Lokasi terdeteksi salah padahal sudah di kelas' },
-  { value: 'session_expired', label: '⏱️ Sesi Sudah Expired', desc: 'Sesi kedaluwarsa sebelum sempat absen' },
-  { value: 'token_invalid', label: '❌ Token Tidak Valid', desc: 'Token QR tidak dikenali sistem' },
-  { value: 'already_marked', label: '🔁 Sudah Ditandai Hadir', desc: 'Sistem menganggap sudah absen padahal belum' },
-  { value: 'other', label: '💬 Lainnya', desc: 'Masalah lain yang tidak termasuk di atas' },
+  { value: 'gps_not_accurate', label: 'GPS Tidak Akurat',     desc: 'Lokasi terdeteksi salah padahal sudah di kelas', Icon: AlertCircle },
+  { value: 'session_expired',  label: 'Sesi Sudah Expired',   desc: 'Sesi kedaluwarsa sebelum sempat absen',          Icon: Clock       },
+  { value: 'token_invalid',    label: 'Token Tidak Valid',     desc: 'Token QR tidak dikenali sistem',                Icon: XCircle     },
+  { value: 'already_marked',   label: 'Sudah Ditandai Hadir', desc: 'Sistem menganggap sudah absen padahal belum',   Icon: RefreshCw   },
+  { value: 'other',            label: 'Lainnya',              desc: 'Masalah lain yang tidak termasuk di atas',      Icon: MessageCircle },
 ];
 
 export default function ReportIssuePage() {
@@ -41,20 +42,19 @@ export default function ReportIssuePage() {
 
   if (sent) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          padding: 32,
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', minHeight: '60vh', padding: 32, textAlign: 'center',
+      }}>
+        <div style={{
+          width: 72, height: 72, borderRadius: '50%',
+          background: '#d1fae5', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', marginBottom: 16,
+        }}>
+          <Send size={32} color="#059669" />
+        </div>
         <h2 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 800, color: '#1e293b' }}>
-          Laporan Terkirim!
+          Laporan Terkirim
         </h2>
         <p style={{ margin: '0 0 28px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
           Laporan Anda telah diteruskan ke admin. Tim akan meninjau dan menghubungi Anda
@@ -64,14 +64,9 @@ export default function ReportIssuePage() {
           onClick={() => navigate('/dosen/absen')}
           style={{
             background: 'linear-gradient(135deg,#1E2D78,#2d3f9e)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 14,
-            padding: '14px 28px',
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 6px 20px rgba(30,45,120,0.3)',
+            color: '#fff', border: 'none', borderRadius: 14,
+            padding: '14px 28px', fontSize: 15, fontWeight: 700,
+            cursor: 'pointer', boxShadow: '0 6px 20px rgba(30,45,120,0.3)',
           }}
         >
           Kembali ke Beranda
@@ -87,19 +82,12 @@ export default function ReportIssuePage() {
         <button
           onClick={() => navigate(-1)}
           style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 13,
-            color: '#64748b',
-            fontWeight: 600,
-            padding: '0 0 12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 13, color: '#64748b', fontWeight: 600,
+            padding: '0 0 12px', display: 'flex', alignItems: 'center', gap: 4,
           }}
         >
-          ← Kembali
+          <ArrowLeft size={14} /> Kembali
         </button>
         <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800, color: '#1e293b', letterSpacing: '-0.4px' }}>
           Laporkan Kendala
@@ -120,31 +108,19 @@ export default function ReportIssuePage() {
               key={opt.value}
               onClick={() => setIssueType(opt.value)}
               style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-                padding: '12px 14px',
-                borderRadius: 14,
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+                padding: '12px 14px', borderRadius: 14,
                 border: `1.5px solid ${issueType === opt.value ? '#1E2D78' : '#e2e8f0'}`,
                 background: issueType === opt.value ? '#eff6ff' : '#fff',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.15s',
+                cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
               }}
             >
-              <div
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  border: `2px solid ${issueType === opt.value ? '#1E2D78' : '#cbd5e1'}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  marginTop: 2,
-                }}
-              >
+              <div style={{
+                width: 18, height: 18, borderRadius: '50%',
+                border: `2px solid ${issueType === opt.value ? '#1E2D78' : '#cbd5e1'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, marginTop: 2,
+              }}>
                 {issueType === opt.value && (
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#1E2D78' }} />
                 )}
@@ -171,14 +147,9 @@ export default function ReportIssuePage() {
           placeholder="Contoh: Tidak bisa absen Kalkulus Lanjut 14 Apr"
           maxLength={120}
           style={{
-            width: '100%',
-            padding: '13px 14px',
-            borderRadius: 12,
-            border: '1.5px solid #e2e8f0',
-            fontSize: 14,
-            outline: 'none',
-            color: '#1e293b',
-            boxSizing: 'border-box',
+            width: '100%', padding: '13px 14px', borderRadius: 12,
+            border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none',
+            color: '#1e293b', boxSizing: 'border-box',
           }}
         />
       </div>
@@ -195,16 +166,9 @@ export default function ReportIssuePage() {
           rows={5}
           maxLength={800}
           style={{
-            width: '100%',
-            padding: '13px 14px',
-            borderRadius: 12,
-            border: '1.5px solid #e2e8f0',
-            fontSize: 14,
-            outline: 'none',
-            color: '#1e293b',
-            resize: 'vertical',
-            fontFamily: 'inherit',
-            boxSizing: 'border-box',
+            width: '100%', padding: '13px 14px', borderRadius: 12,
+            border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none',
+            color: '#1e293b', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
           }}
         />
         <p style={{ margin: '4px 0 0', fontSize: 11, color: '#94a3b8', textAlign: 'right' }}>
@@ -214,19 +178,12 @@ export default function ReportIssuePage() {
 
       {/* Error */}
       {error && (
-        <div
-          style={{
-            background: '#fef2f2',
-            border: '1px solid #fca5a5',
-            borderRadius: 12,
-            padding: '12px 14px',
-            marginBottom: 16,
-            fontSize: 13,
-            color: '#dc2626',
-            fontWeight: 600,
-          }}
-        >
-          ⚠️ {error}
+        <div style={{
+          background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 12,
+          padding: '12px 14px', marginBottom: 16, fontSize: 13, color: '#dc2626', fontWeight: 600,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <AlertCircle size={14} /> {error}
         </div>
       )}
 
@@ -235,26 +192,23 @@ export default function ReportIssuePage() {
         onClick={handleSubmit}
         disabled={submitting}
         style={{
-          width: '100%',
-          padding: '15px',
-          borderRadius: 14,
-          border: 'none',
-          background: submitting
-            ? '#94a3b8'
-            : 'linear-gradient(135deg,#1E2D78,#2d3f9e)',
-          color: '#fff',
-          fontSize: 15,
-          fontWeight: 700,
+          width: '100%', padding: '15px', borderRadius: 14, border: 'none',
+          background: submitting ? '#94a3b8' : 'linear-gradient(135deg,#1E2D78,#2d3f9e)',
+          color: '#fff', fontSize: 15, fontWeight: 700,
           cursor: submitting ? 'not-allowed' : 'pointer',
           boxShadow: !submitting ? '0 6px 20px rgba(30,45,120,0.3)' : 'none',
           transition: 'all 0.2s',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}
       >
-        {submitting ? '⏳ Mengirim…' : '📨 Kirim Laporan'}
+        {submitting
+          ? <><RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> Mengirim…</>
+          : <><Send size={16} /> Kirim Laporan</>
+        }
       </button>
 
       <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', margin: '14px 0 0', lineHeight: 1.6 }}>
-        Laporan akan diterima admin dan ditindaklanjuti dalam waktu 1×24 jam kerja.
+        Laporan akan diterima admin dan ditindaklanjuti dalam waktu 1x24 jam kerja.
       </p>
     </div>
   );

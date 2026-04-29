@@ -9,6 +9,7 @@ import {
   History,
   User,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 
@@ -16,6 +17,7 @@ const navItems = [
   { to: '/dosen/absen',   label: 'Absensi',  icon: ClipboardCheck },
   { to: '/dosen/scan',    label: 'Scan QR',  icon: QrCode         },
   { to: '/dosen/riwayat', label: 'Riwayat',  icon: History        },
+  { to: '/dosen/pesan',   label: 'Pesan',    icon: MessageSquare  },
   { to: '/dosen/profil',  label: 'Profil',   icon: User           },
 ];
 
